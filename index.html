@@ -852,30 +852,27 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900">Solicitudes de Ingreso CDT</h2>
-                    <p class="text-xs text-slate-500">Centro de Diagnóstico y Tratamiento - Pacientes en espera de cama</p>
+                    <p class="text-xs text-slate-500">Centro de Diagnóstico y Tratamiento - Pacientes en espera de cama · Últimos 30 registros</p>
                 </div>
-                <button onclick="openCdtModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
-                    <i class="fa-solid fa-plus mr-1.5"></i> Nueva Solicitud CDT
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="cargarSolicitudesCDT()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                        <i class="fa-solid fa-rotate mr-1"></i> Actualizar
+                    </button>
+                    <button onclick="openModuleSheet('cdt')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
+                        <i class="fa-solid fa-plus mr-1.5"></i> Nueva Solicitud CDT (en Google Sheet)
+                    </button>
+                </div>
             </div>
 
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                        <tr>
-                            <th class="p-3">Prioridad</th>
-                            <th class="p-3">F. Solicitud</th>
-                            <th class="p-3">Paciente</th>
-                            <th class="p-3">Especialidad CDT</th>
-                            <th class="p-3">Requerimiento</th>
-                            <th class="p-3">Estado</th>
-                            <th class="p-3 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cdt-table-body" class="divide-y divide-slate-100">
-                        <!-- JS Dynamic content -->
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="cdt-table-head"></thead>
+                        <tbody id="cdt-table-body" class="divide-y divide-slate-100">
+                            <tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1604,12 +1601,15 @@
         // ID real de la planilla "PLANILLA HORARIO INHÁBIL"
         const INHABIL_SPREADSHEET_ID = '1BbXod2qcSa5ngLLDUtrTJUxaV6UbBGFW';
         const INHABIL_GID = '0'; // no se indicó gid específico -> primera pestaña
+        // ID real de la planilla "SOLICITUDES CDT"
+        const CDT_SPREADSHEET_ID = '1Z0ftjJPxnlu0_tSooyVde4nD_7c31JIhLwMAhZ5zLTs';
+        const CDT_SHEET_NAME = 'ORDENES';
 
         const defaultSheetUrls = {
             novedades: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
             inhabil: `https://docs.google.com/spreadsheets/d/${INHABIL_SPREADSHEET_ID}/edit`,
             informe: `https://docs.google.com/spreadsheets/d/${INFORME_TURNO_SPREADSHEET_ID}/edit`,
-            cdt: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            cdt: `https://docs.google.com/spreadsheets/d/${CDT_SPREADSHEET_ID}/edit`,
             'hec-huap': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
             macrorred: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
             'ref-adulto': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
@@ -2014,11 +2014,6 @@
         const inhabilLogs = [];
 
         // CDT Requests Mock
-        const cdtRequests = [
-            { id: 'CDT-01', priority: 'ALTA', date: '03/08/2026', patient: 'Gabriel Arancibia', spec: 'Oncología Médica', req: 'Cama Media para Quimioterapia', status: 'EN ESPERA' },
-            { id: 'CDT-02', priority: 'MEDIA', date: '02/08/2026', patient: 'Ana Maria Lopez', spec: 'Traumatología', req: 'Preparación Quirúrgica Cadera', status: 'ASIGNADA' }
-        ];
-
         // HEC / HUAP Cases
         const hecHuapCases = [
             { type: 'HEC', patient: 'Roberto Araya', age: '59', dx: 'Sepsis Urinaria', bedReq: 'UTI Adulto', status: 'Derivación Aceptada - En Tránsito' },
@@ -2084,7 +2079,7 @@
             // Trigger specific module renders
             if (modId === 'novedades') { cargarSolicitudesSalida(); }
             if (modId === 'inhabil') { renderInhabilTable(); cargarResidentesTurno(); }
-            if (modId === 'cdt') renderCdtTable();
+            if (modId === 'cdt') cargarSolicitudesCDT();
             if (modId === 'hec-huap') renderHecHuapList();
             if (modId === 'macrorred') renderMacrorredTable();
             if (modId === 'ref-adulto') renderRefAdulto();
@@ -2355,37 +2350,63 @@
             }
         }
 
-        // Module 5: CDT Render
-        function renderCdtTable() {
-            const tbody = document.getElementById('cdt-table-body');
-            tbody.innerHTML = cdtRequests.map(req => `
-                <tr class="hover:bg-slate-50">
-                    <td class="p-3"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${req.priority}</span></td>
-                    <td class="p-3 text-slate-500">${req.date}</td>
-                    <td class="p-3 font-bold text-slate-800">${req.patient}</td>
-                    <td class="p-3 font-medium text-slate-700">${req.spec}</td>
-                    <td class="p-3 text-slate-600">${req.req}</td>
-                    <td class="p-3"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${req.status}</span></td>
-                    <td class="p-3 text-center">
-                        <button onclick="alert('Asignación realizada con éxito')" class="bg-brand-600 text-white px-2 py-1 rounded text-[10px] font-bold">Asignar Cama</button>
-                    </td>
-                </tr>
-            `).join('');
+        // ---------------------------------------------------------------
+        // Módulo CDT: Solicitudes de Ingreso — datos en vivo
+        // Fuente: Google Sheet "SOLICITUDES CDT"
+        // Se toma la 1ª fila de la hoja como encabezado (columnas literales
+        // desde la planilla) y se muestran solo los últimos 30 registros.
+        // TODO: reemplazar por el ID real de la planilla "SOLICITUDES CDT"
+        // (archivo distinto a "NOVEDADES..."). Mientras tanto se muestra un
+        // aviso para configurarlo.
+        // ---------------------------------------------------------------
+        // Descarga una hoja completa (sin rango fijo) vía la API pública gviz (JSON)
+        async function leerHojaCompletaGviz(spreadsheetId, sheetName) {
+            const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`
+                + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+            const res = await fetch(url);
+            const text = await res.text();
+            const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+            if (!json.table || !json.table.rows) return [];
+            return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
         }
 
-        function openCdtModal() {
-            const p = prompt('Nombre del Paciente Solicitud CDT:');
-            if (p) {
-                cdtRequests.unshift({
-                    id: `CDT-0${cdtRequests.length+1}`,
-                    priority: 'ALTA',
-                    date: new Date().toLocaleDateString('es-CL'),
-                    patient: p,
-                    spec: 'Consulta Médica CDT',
-                    req: 'Evaluación e Ingreso Cama',
-                    status: 'EN ESPERA'
-                });
-                renderCdtTable();
+        async function cargarSolicitudesCDT() {
+            const thead = document.getElementById('cdt-table-head');
+            const tbody = document.getElementById('cdt-table-body');
+
+            if (!CDT_SPREADSHEET_ID || !CDT_SHEET_NAME) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-amber-600">Falta configurar el ID y la pestaña de "SOLICITUDES CDT" para mostrar los datos reales.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const filas = await leerHojaCompletaGviz(CDT_SPREADSHEET_ID, CDT_SHEET_NAME);
+                if (filas.length === 0) {
+                    thead.innerHTML = '';
+                    tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos.</td></tr>';
+                    return;
+                }
+
+                const [encabezado, ...datos] = filas;
+                thead.innerHTML = '<tr>' + encabezado.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
+
+                const datosConContenido = datos.filter(f => f.some(v => String(v ?? '').trim() !== ''));
+                const ultimos30 = datosConContenido.slice(-30).reverse(); // más recientes primero
+
+                if (ultimos30.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${encabezado.length}" class="p-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = ultimos30.map(f => '<tr class="hover:bg-slate-50">'
+                    + f.map(v => `<td class="p-3 text-slate-700">${v ?? ''}</td>`).join('')
+                    + '</tr>').join('');
+            } catch (err) {
+                console.warn('No se pudo leer "SOLICITUDES CDT":', err);
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
             }
         }
 

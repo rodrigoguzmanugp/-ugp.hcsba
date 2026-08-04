@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Camas Hospitalarias 2026</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf.js for generating PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+            .print-card { border: 1px solid #ccc; break-inside: avoid; }
+        }
+        .print-only { display: none; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- ========================================================= -->
+    <!-- LOGIN SCREEN                                               -->
+    <!-- ========================================================= -->
+    <div id="login-screen" class="fixed inset-0 z-[999] bg-slate-950 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-slate-50 rounded-2xl shadow-2xl p-7">
+            <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center">
+                    <i class="fa-solid fa-bed-pulse text-indigo-500 text-xl"></i>
+                </div>
+            </div>
+            <h1 class="text-center text-xl font-extrabold text-slate-900">GestorCamas</h1>
+            <p class="text-center text-xs text-slate-500 mt-1 mb-5">Plataforma Profesional de Gestión de Camas</p>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-200 mb-5 text-sm font-semibold">
+                <button id="tab-btn-login" onclick="mostrarTabLogin('login')" class="flex-1 pb-2.5 text-slate-900 border-b-2 border-indigo-500">Iniciar Sesión</button>
+                <button id="tab-btn-registro" onclick="mostrarTabLogin('registro')" class="flex-1 pb-2.5 text-slate-400 border-b-2 border-transparent">Registrar Operador</button>
+            </div>
+
+            <p id="supabase-config-warning" class="hidden text-[11px] bg-amber-50 text-amber-700 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                Supabase no está configurado: define <code>SUPABASE_URL</code> y <code>SUPABASE_ANON_KEY</code> en el script.
+            </p>
+
+            <!-- LOGIN PANEL -->
+            <form id="panel-login" onsubmit="iniciarSesion(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Usuario</label>
+                    <input id="login-usuario" type="text" autocomplete="username" placeholder="Ej. administrador" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Contraseña</label>
+                    <input id="login-clave" type="password" autocomplete="current-password" placeholder="••••••••" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Turno</label>
+                        <select id="login-turno" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option>Largo</option>
+                            <option>Diurno</option>
+                            <option>Noche</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Área de Trabajo</label>
+                        <select id="login-area" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option>Ambas</option>
+                            <option>Adulto</option>
+                            <option>Pediatría</option>
+                        </select>
+                    </div>
+                </div>
+                <p id="login-error" class="text-xs text-red-600 hidden"></p>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg py-2.5 transition shadow">Ingresar al Panel</button>
+                <button type="button" onclick="ingresarInvitado()" class="w-full bg-white hover:bg-slate-100 text-slate-700 font-medium text-sm rounded-lg py-2.5 border border-slate-200 transition flex items-center justify-center">
+                    <i class="fa-solid fa-user text-amber-500 mr-2"></i> Ingresar como Invitado (Modo Consulta)
+                </button>
+            </form>
+
+            <!-- REGISTER PANEL -->
+            <form id="panel-registro" onsubmit="registrarOperador(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Nuevo Usuario</label>
+                    <input id="reg-usuario" type="text" placeholder="Ej. jperez" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Contraseña</label>
+                    <input id="reg-clave" type="password" placeholder="••••••••" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" required minlength="4">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Permiso de Acceso</label>
+                    <select id="reg-permiso" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <option value="lectura">Solo Lectura (consulta los módulos y planillas)</option>
+                        <option value="escritura">Escritura (además puede configurar enlaces de las hojas)</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Turno</label>
+                        <select id="reg-turno" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option>Largo</option>
+                            <option>Diurno</option>
+                            <option>Noche</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Área</label>
+                        <select id="reg-area" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option>Ambas</option>
+                            <option>Adulto</option>
+                            <option>Pediatría</option>
+                        </select>
+                    </div>
+                </div>
+                <p id="registro-error" class="text-xs text-red-600 hidden"></p>
+                <p id="registro-ok" class="text-xs text-emerald-600 hidden"></p>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg py-2.5 transition shadow">Registrar Operador</button>
+            </form>
+
+            <p class="text-center text-[10px] text-slate-400 mt-5">Unidad de Gestión Centralizada de Camas (UGCC)</p>
+        </div>
+    </div>
+
+    <div id="app-shell" class="hidden flex-col min-h-screen">
+    <!-- Top Bar Navigation -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo / Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchModule('home')">
+                    <div class="bg-brand-500 p-2 rounded-lg text-white">
+                        <i class="fa-solid font-bold fa-hospital text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide">SGC - Sistema de Gestión de Camas</h1>
+                        <p class="text-xs text-slate-400">Hospital Central - Red Asistencial 2026</p>
+                    </div>
+                </div>
+
+                <!-- Right Header Actions -->
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="hidden md:flex items-center bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">
+                        <i class="fa-regular fa-clock mr-2 text-brand-500"></i>
+                        <span id="live-clock">Cargando fecha...</span>
+                    </div>
+                    <button onclick="openModuleSheet('novedades')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center shadow-sm text-xs sm:text-sm">
+                        <i class="fa-solid fa-file-excel mr-2"></i> Abrir Google Sheet
+                    </button>
+                    <button onclick="imprimirSolicitudPabellon()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center shadow-sm text-xs sm:text-sm">
+                        <i class="fa-solid fa-scissors mr-2"></i> Solicitud Pabellón
+                    </button>
+                    <div class="hidden sm:flex items-center bg-slate-800 pl-3 pr-1.5 py-1.5 rounded-lg border border-slate-700 space-x-2">
+                        <div class="text-right leading-tight">
+                            <p class="text-xs font-semibold text-white" id="user-badge-nombre">—</p>
+                            <p class="text-[10px] text-slate-400" id="user-badge-rol">—</p>
+                        </div>
+                        <button onclick="cerrarSesion()" title="Cerrar sesión" class="bg-slate-700 hover:bg-red-600 text-white w-7 h-7 rounded-md flex items-center justify-center transition">
+                            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-Header Module Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm no-print sticky top-16 z-30 overflow-x-auto">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium py-2 whitespace-nowrap">
+            <button onclick="switchModule('home')" id="nav-home" class="nav-btn active px-3 py-2 rounded-md transition text-brand-600 bg-brand-50 border border-brand-200">
+                <i class="fa-solid fa-house mr-1.5"></i> Inicio / Dashboard
+            </button>
+            <button onclick="navigateToModule('novedades')" id="nav-novedades" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-file-excel mr-1.5 text-emerald-600"></i> Novedades 2026 (Google Sheet)
+            </button>
+            <button onclick="navigateToModule('inhabil')" id="nav-inhabil" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-moon mr-1.5"></i> Horario Inhábil
+            </button>
+            <button onclick="navigateToModule('informe')" id="nav-informe" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-clipboard-list mr-1.5"></i> Informe de Turno
+            </button>
+            <button onclick="navigateToModule('cdt')" id="nav-cdt" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-stethoscope mr-1.5"></i> Solicitudes CDT
+            </button>
+            <button onclick="navigateToModule('hec-huap')" id="nav-hec-huap" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-truck-medical mr-1.5"></i> HEC y HUAP
+            </button>
+            <button onclick="navigateToModule('macrorred')" id="nav-macrorred" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-network-wired mr-1.5"></i> Macrorred / Privados
+            </button>
+            <button onclick="navigateToModule('ref-adulto')" id="nav-ref-adulto" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-user-doctor mr-1.5"></i> Ref. Médicos Adulto
+            </button>
+            <button onclick="navigateToModule('ref-pede')" id="nav-ref-pede" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-child-reaching mr-1.5"></i> Ref. Pediatría/Gine
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ========================================== -->
+        <!-- MODULE 1: HOME DASHBOARD                   -->
+        <!-- ========================================== -->
+        <section id="mod-home" class="module-section space-y-6">
+            <!-- Welcome banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-brand-900 to-slate-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <span class="bg-brand-500/30 text-brand-200 text-xs font-semibold px-2.5 py-1 rounded-full border border-brand-400/30">
+                            Unidad de Gestión Centralizada de Camas (UGCC)
+                        </span>
+                        <h2 class="text-2xl font-bold mt-2">Plataforma Integrada de Ocupación Hospitalaria</h2>
+                        <p class="text-slate-300 text-sm mt-1 max-w-2xl">
+                            Monitoreo en tiempo real de dotación de camas Adulto y Pediatría, derivaciones de la Macrorred, gestión de pabellones y registro de turno.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="imprimirSolicitudPabellon()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold px-4 py-2 rounded-lg text-sm transition shadow">
+                            <i class="fa-solid fa-file-pdf mr-2"></i> Generar Solicitud Pabellón
+                        </button>
+                        <button onclick="navigateToModule('novedades')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm transition border border-white/20">
+                            <i class="fa-solid fa-table-cells mr-2"></i> Ver Plano Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operational KPI Cards -->
+            <!-- Fuente: Google Sheet "INFORME DE TURNO" · Adulto = pestaña "ENCUESTAS ÁREA ADULTO" · Pediatría = pestaña "ENCUESTAS ÁREA PEDIATRIA" -->
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-[11px] text-slate-400">
+                    <i class="fa-solid fa-file-excel text-emerald-500 mr-1"></i>
+                    Datos desde "INFORME DE TURNO" — <span class="font-medium">Encuestas Área Adulto</span> / <span class="font-medium">Encuestas Área Pediatría</span>
+                    · Actualizado: <span id="dash-kpi-updated">--:--</span>
+                </p>
+                <button onclick="cargarKpisCamasCriticas()" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium">
+                    <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                </button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase text-slate-500">Camas Adulto UCI Totales</span>
+                        <span class="p-2 bg-blue-50 text-blue-600 rounded-lg text-sm"><i class="fa-solid fa-heart-pulse"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span class="text-2xl font-bold text-slate-900" id="dash-uci-adulto-occ">--%</span>
+                        <span class="ml-2 text-xs font-medium text-emerald-600" id="dash-uci-adulto-free">-- Disponibles</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5"><span id="dash-uci-adulto-total">--</span> camas totales</p>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                        <div class="bg-blue-600 h-1.5 rounded-full" id="dash-uci-adulto-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase text-slate-500">Camas Adulto UTI Totales</span>
+                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm"><i class="fa-solid fa-lungs"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span class="text-2xl font-bold text-slate-900" id="dash-uti-adulto-occ">--%</span>
+                        <span class="ml-2 text-xs font-medium text-emerald-600" id="dash-uti-adulto-free">-- Disponibles</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5"><span id="dash-uti-adulto-total">--</span> camas totales</p>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                        <div class="bg-indigo-600 h-1.5 rounded-full" id="dash-uti-adulto-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase text-slate-500">Camas Pediatría UCIP Totales</span>
+                        <span class="p-2 bg-teal-50 text-teal-600 rounded-lg text-sm"><i class="fa-solid fa-child"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span class="text-2xl font-bold text-slate-900" id="dash-ucip-pedi-occ">--%</span>
+                        <span class="ml-2 text-xs font-medium text-emerald-600" id="dash-ucip-pedi-free">-- Disponibles</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5"><span id="dash-ucip-pedi-total">--</span> camas totales</p>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                        <div class="bg-teal-500 h-1.5 rounded-full" id="dash-ucip-pedi-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase text-slate-500">Camas Pediatría UTIP Totales</span>
+                        <span class="p-2 bg-purple-50 text-purple-600 rounded-lg text-sm"><i class="fa-solid fa-baby"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span class="text-2xl font-bold text-slate-900" id="dash-utip-pedi-occ">--%</span>
+                        <span class="ml-2 text-xs font-medium text-emerald-600" id="dash-utip-pedi-free">-- Disponibles</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5"><span id="dash-utip-pedi-total">--</span> camas totales</p>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                        <div class="bg-purple-500 h-1.5 rounded-full" id="dash-utip-pedi-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid of Modules Direct Access -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4">Módulos del Sistema</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <div onclick="navigateToModule('novedades')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-file-excel text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-emerald-600">Novedades 2026</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet en Nueva Pestaña <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('inhabil')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-moon text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Horario Inhábil</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Registros <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('informe')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-clipboard-check text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Informe de Turno</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Informe <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('cdt')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-stethoscope text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Solicitudes CDT</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Solicitudes <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('hec-huap')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-truck-medical text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Casos HEC y HUAP</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Casos <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('macrorred')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center group-hover:bg-teal-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-network-wired text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Macrorred & Privados</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Derivaciones <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('ref-adulto')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-address-book text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Ref. Médicos Adultos</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Contactos <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="navigateToModule('ref-pede')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center group-hover:bg-pink-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-hospital-user text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Ref. Pediatría / Gine</h4>
+                                <p class="text-xs text-slate-500">Abrir Google Sheet & Contactos <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 2: NOVEDADES ADULTO Y PEDIATRIA 2026-->
+        <!-- ========================================== -->
+        <section id="mod-novedades" class="module-section hidden space-y-6">
+            <!-- Banner Google Sheet Novedades -->
+            <div class="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-emerald-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-emerald-500/20 rounded-lg border border-emerald-400/30">
+                            <i class="fa-solid fa-file-excel text-emerald-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "NOVEDADES ADULTO Y PEDIATRÍA 2026"</h3>
+                            <p class="text-xs text-emerald-200">Planilla de cálculo colaborativa en tiempo real UGCC</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('novedades')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('novedades', 'Novedades Adulto y Pediatría')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Planilla General de Camas - Novedades 2026</h2>
+                    <p class="text-xs text-slate-500">Inspirado en Planos Oficiales de Pediatría 2025 y Adulto Enero 2026</p>
+                </div>
+                
+                <!-- Controls & Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="bed-sector-filter" onchange="renderBedPlan()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500">
+                        <option value="ALL">Todos los Sectores</option>
+                        <option value="ADULTO_UPC">Adultos: UPC (UCI / UTI)</option>
+                        <option value="ADULTO_MED">Adultos: Cuidados Medios / Básicos</option>
+                        <option value="PEDE_UPC">Pediatría: UPC Infantil</option>
+                        <option value="PEDE_SALA">Pediatría: Salas General 2025</option>
+                    </select>
+
+                    <button onclick="toggleViewMode()" id="toggle-view-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                        <i class="fa-solid fa-table-list mr-1"></i> Modo Excel
+                    </button>
+
+                    <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-medium shadow-sm">
+                        <i class="fa-solid fa-print mr-1"></i> Imprimir Planilla
+                    </button>
+
+                    <button onclick="imprimirSolicitudPabellon()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-2 rounded-lg font-medium shadow-sm">
+                        <i class="fa-solid fa-scissors mr-1"></i> Informe Pabellones
+                    </button>
+                </div>
+            </div>
+
+            <!-- Legend of Statuses -->
+            <div class="flex flex-wrap gap-4 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 mr-1.5"></span> Disponible</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-600 mr-1.5"></span> Ocupada</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-500 mr-1.5"></span> Salida UPC / Pabellón</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-rose-500 mr-1.5"></span> Bloqueada / Falla</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-purple-500 mr-1.5"></span> En Aseo / Pre-Alta</span>
+            </div>
+
+            <!-- Interactive Visual Grid Container -->
+            <div id="visual-bed-plan" class="space-y-6">
+                <!-- Dynamically Rendered by JS -->
+            </div>
+
+            <!-- Excel-style Table View Container (Hidden by default) -->
+            <div id="excel-bed-plan" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-900 text-white uppercase font-semibold">
+                            <tr>
+                                <th class="p-2.5 border border-slate-700">Cama</th>
+                                <th class="p-2.5 border border-slate-700">Sector / Servicio</th>
+                                <th class="p-2.5 border border-slate-700">Estado</th>
+                                <th class="p-2.5 border border-slate-700">Paciente</th>
+                                <th class="p-2.5 border border-slate-700">RUT</th>
+                                <th class="p-2.5 border border-slate-700">Edad</th>
+                                <th class="p-2.5 border border-slate-700">Diagnóstico</th>
+                                <th class="p-2.5 border border-slate-700">Salida Pabellón</th>
+                                <th class="p-2.5 border border-slate-700 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="excel-table-body" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 3: PLANILLA HORARIO INHÁBIL        -->
+        <!-- ========================================== -->
+        <section id="mod-inhabil" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-indigo-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-indigo-500/20 rounded-lg border border-indigo-400/30">
+                            <i class="fa-solid fa-file-excel text-indigo-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "PLANILLA HORARIO INHÁBIL"</h3>
+                            <p class="text-xs text-indigo-200">Planilla compartida para registro de turno nocturno y fines de semana</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('inhabil')" class="bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('inhabil', 'Planilla Horario Inhábil')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Planilla Registro Horario Inhábil</h2>
+                    <p class="text-xs text-slate-500">Gestión de traslados, ingresos urgentes y asignaciones de noche / fines de semana</p>
+                </div>
+                <button onclick="openInhabilModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm flex items-center">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Nuevo Registro Inhábil
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Hora/Fecha</th>
+                                <th class="p-3">Paciente</th>
+                                <th class="p-3">Origen</th>
+                                <th class="p-3">Cama Asignada</th>
+                                <th class="p-3">Gestor a Cargo</th>
+                                <th class="p-3">Observaciones</th>
+                                <th class="p-3 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inhabil-table-body" class="divide-y divide-slate-100">
+                            <!-- JS content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 4: INFORME DE TURNO                 -->
+        <!-- ========================================== -->
+        <section id="mod-informe" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-emerald-900 via-slate-900 to-teal-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-emerald-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-emerald-500/20 rounded-lg border border-emerald-400/30">
+                            <i class="fa-solid fa-file-excel text-emerald-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "INFORME DE TURNO"</h3>
+                            <p class="text-xs text-emerald-200">Documento compartido para entrega de turno y novedades UGCC</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('informe')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('informe', 'Informe de Turno')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Informe Diario / Entrega de Turno</h2>
+                    <p class="text-xs text-slate-500">Resumen consolidado para cambio de turno UGCC</p>
+                </div>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
+                    <i class="fa-solid fa-print mr-1.5"></i> Imprimir Informe Completo
+                </button>
+            </div>
+
+            <!-- Report Card Content (Printable) -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6 print-card">
+                <div class="border-b border-slate-200 pb-4 flex justify-between items-start">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">REPORTE CONSOLIDADO DE GESTIÓN DE CAMAS</h3>
+                        <p class="text-xs text-slate-500">Unidad de Gestión Centralizada de Camas (UGCC)</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-600">
+                        <p><span class="font-semibold">Turno:</span> 24 Horas</p>
+                        <p><span class="font-semibold">Fecha:</span> <span id="informe-fecha">03/08/2026</span></p>
+                    </div>
+                </div>
+
+                <!-- Resumen de Ocupación por Área -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">1. Resumen Ocupacional</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="font-semibold text-slate-700">UPC Adulto (UCI / UTI)</p>
+                            <div class="mt-2 space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">28</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">26</span></div>
+                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">2</span></div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="font-semibold text-slate-700">UPC Pediatría (UCI/UTI Pede)</p>
+                            <div class="mt-2 space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">12</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">10</span></div>
+                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">2</span></div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="font-semibold text-slate-700">Cuidados Medios / Básicos</p>
+                            <div class="mt-2 space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">150</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">132</span></div>
+                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">18</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Novedades de Turno -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">2. Novedades y Eventos Relevantes</h4>
+                    <textarea class="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500" rows="4" placeholder="Ingrese las novedades del turno saliente...">- Paciente ingresado en cama UTI-04 en ventilación mecánica tras cirugía de urgencia.
+- Se gestionan 2 traslados pendientes con Macrorred para liberación de camas UPC.
+- Pabellón solicita 3 camas de salida UPC para cirugías programadas de la mañana.</textarea>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 5: SOLICITUDES CDT                  -->
+        <!-- ========================================== -->
+        <section id="mod-cdt" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-amber-900 via-slate-900 to-amber-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-amber-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-amber-500/20 rounded-lg border border-amber-400/30">
+                            <i class="fa-solid fa-file-excel text-amber-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "SOLICITUDES DE INGRESO CDT"</h3>
+                            <p class="text-xs text-amber-200">Planilla compartida para seguimiento de solicitudes del Centro Diagnóstico</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('cdt')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('cdt', 'Solicitudes CDT')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Solicitudes de Ingreso CDT</h2>
+                    <p class="text-xs text-slate-500">Centro de Diagnóstico y Tratamiento - Pacientes en espera de cama</p>
+                </div>
+                <button onclick="openCdtModal()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Nueva Solicitud CDT
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">Prioridad</th>
+                            <th class="p-3">F. Solicitud</th>
+                            <th class="p-3">Paciente</th>
+                            <th class="p-3">Especialidad CDT</th>
+                            <th class="p-3">Requerimiento</th>
+                            <th class="p-3">Estado</th>
+                            <th class="p-3 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cdt-table-body" class="divide-y divide-slate-100">
+                        <!-- JS Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 6: CASOS HEC Y HUAP                -->
+        <!-- ========================================== -->
+        <section id="mod-hec-huap" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-rose-900 via-slate-900 to-rose-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-rose-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-rose-500/20 rounded-lg border border-rose-400/30">
+                            <i class="fa-solid fa-file-excel text-rose-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "REGISTRO CASOS HEC Y HUAP"</h3>
+                            <p class="text-xs text-rose-200">Planilla compartida para derivaciones El Carmen y Posta Central</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('hec-huap')" class="bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('hec-huap', 'Casos HEC y HUAP')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Casos HEC y HUAP</h2>
+                    <p class="text-xs text-slate-500">Hospital El Carmen & Hospital de Urgencia Asistencia Pública (Ex Posta Central)</p>
+                </div>
+                <button onclick="openHecHuapModal()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Registrar Caso HEC/HUAP
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- HEC Column -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-hospital-user text-rose-500 mr-2"></i> Hospital El Carmen (HEC)</h3>
+                        <span class="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-semibold" id="hec-count">2 Casos</span>
+                    </div>
+                    <div id="hec-list-container" class="space-y-2 text-xs">
+                        <!-- JS Populated -->
+                    </div>
+                </div>
+
+                <!-- HUAP Column -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-truck-medical text-amber-500 mr-2"></i> HUAP (Posta Central)</h3>
+                        <span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold" id="huap-count">3 Casos</span>
+                    </div>
+                    <div id="huap-list-container" class="space-y-2 text-xs">
+                        <!-- JS Populated -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 7: OTROS PUBLICOS - MACRORRED - PRIVADOS -->
+        <!-- ========================================== -->
+        <section id="mod-macrorred" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-teal-900 via-slate-900 to-teal-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-teal-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-teal-500/20 rounded-lg border border-teal-400/30">
+                            <i class="fa-solid fa-file-excel text-teal-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "MACRORRED Y PRESTADORES PRIVADOS"</h3>
+                            <p class="text-xs text-teal-200">Planilla compartida para convenios, UGCC Nacional y prestadores privados</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('macrorred')" class="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('macrorred', 'Macrorred y Privados')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Red de Derivaciones - Macrorred & Extra-sistema</h2>
+                    <p class="text-xs text-slate-500">Gestión de cupos con otros hospitales públicos, UGCC Nacional y prestadores privados</p>
+                </div>
+                <button onclick="openMacrorredModal()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Registrar Derivación
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">Tipo Red</th>
+                            <th class="p-3">Establecimiento</th>
+                            <th class="p-3">Paciente</th>
+                            <th class="p-3">Diagnóstico</th>
+                            <th class="p-3">Tipo Cama</th>
+                            <th class="p-3 text-center">Estado UGCC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="macrorred-table-body" class="divide-y divide-slate-100">
+                        <!-- JS dynamic -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 8: DATOS REFERENTES MEDICOS ADULTO  -->
+        <!-- ========================================== -->
+        <section id="mod-ref-adulto" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-sky-900 via-slate-900 to-sky-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-sky-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-sky-500/20 rounded-lg border border-sky-400/30">
+                            <i class="fa-solid fa-file-excel text-sky-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "DIRECTORIO REFERENTES MÉDICOS ADULTO"</h3>
+                            <p class="text-xs text-sky-200">Planilla compartida con datos de contacto y jefaturas de servicio Adulto</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('ref-adulto')" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('ref-adulto', 'Referentes Médicos Adulto')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Directorio Referentes Médicos Adulto 2026</h2>
+                    <p class="text-xs text-slate-500">Jefaturas de servicio, coordinadores UPC y médicos de turno adultos</p>
+                </div>
+                <input type="text" id="search-ref-adulto" onkeyup="filterDirectory('adulto')" placeholder="Buscar especialidad o médico..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-full sm:w-64">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="ref-adulto-container">
+                <!-- JS populated cards -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- MODULE 9: DATOS REFERENTES PED & GINECO    -->
+        <!-- ========================================== -->
+        <section id="mod-ref-pede" class="module-section hidden space-y-6">
+            <div class="bg-gradient-to-r from-pink-900 via-slate-900 to-pink-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-pink-700/50">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-2 bg-pink-500/20 rounded-lg border border-pink-400/30">
+                            <i class="fa-solid fa-file-excel text-pink-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Google Sheet: "DIRECTORIO REFERENTES PEDIANTRÍA Y GINECOLOGÍA"</h3>
+                            <p class="text-xs text-pink-200">Planilla compartida con datos de contacto infantiles y maternidad</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openModuleSheet('ref-pede')" class="bg-pink-500 hover:bg-pink-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-requires-write="true" onclick="configureSheetUrl('ref-pede', 'Referentes Pediatría y Gine')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                        <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Directorio Referentes Médicos Pediatría y Ginecología</h2>
+                    <p class="text-xs text-slate-500">Jefaturas Infantiles, Neonatología, Maternidad y UPC Pediátrica</p>
+                </div>
+                <input type="text" id="search-ref-pede" onkeyup="filterDirectory('pede')" placeholder="Buscar por médico o unidad..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-full sm:w-64">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="ref-pede-container">
+                <!-- JS populated cards -->
+            </div>
+        </section>
+
+    </main>
+    </div>
+    <!-- /app-shell -->
+
+
+    <!-- ========================================================= -->
+    <!-- MODAL: SOLICITUD DE PABELLÓN / SALIDA UPC (DESCARGA PDF)  -->
+    <!-- ========================================================= -->
+    <div id="modal-pabellon" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between no-print">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-scissors text-amber-400"></i>
+                    <h3 class="font-bold text-base">Solicitud de Camas para Pabellones / Salida UPC</h3>
+                </div>
+                <button onclick="closePabellonModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Printable Document Body -->
+            <div id="pdf-pabellon-content" class="p-8 overflow-y-auto space-y-6 text-slate-800 bg-white">
+                <!-- Document Header -->
+                <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 uppercase">SERVICIO DE SALUD METROPOLITANO</h2>
+                        <h3 class="text-sm font-semibold text-slate-700">SUBDIRECCIÓN DE GESTIÓN DE CAMAS (UGCC)</h3>
+                        <p class="text-xs text-slate-500">Formulario Oficial Solicitud Pabellón - Liberación Salida UPC</p>
+                    </div>
+                    <div class="text-right text-xs">
+                        <p class="font-bold text-slate-900">FECHA: <span id="pab-doc-date">--</span></p>
+                        <p class="text-slate-600">FOLIO: <span class="font-mono font-bold">PAB-2026-089</span></p>
+                    </div>
+                </div>
+
+                <!-- Section: Summary -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
+                    <p class="font-semibold"><i class="fa-solid fa-circle-info mr-1"></i> Notificación a Coordinación de Pabellones:</p>
+                    <p>Las siguientes camas han sido marcadas para <strong>Salida UPC / Requerimiento de Pabellón Quirúrgico</strong>. Se solicita confirmación de horario de tabla para procedimiento.</p>
+                </div>
+
+                <!-- Table of requested UPC beds -->
+                <table class="w-full text-left text-xs border border-slate-300">
+                    <thead class="bg-slate-100 border-b border-slate-300 uppercase font-semibold">
+                        <tr>
+                            <th class="p-2 border-r border-slate-300">Cama</th>
+                            <th class="p-2 border-r border-slate-300">Sector UPC</th>
+                            <th class="p-2 border-r border-slate-300">Paciente</th>
+                            <th class="p-2 border-r border-slate-300">RUT</th>
+                            <th class="p-2 border-r border-slate-300">Diagnóstico / Procedimiento</th>
+                            <th class="p-2">Destino Post-Pabellón</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pabellon-doc-rows" class="divide-y divide-slate-200">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+
+                <!-- Signatures area -->
+                <div class="grid grid-cols-2 gap-8 pt-12 text-center text-xs">
+                    <div>
+                        <div class="border-t border-slate-400 pt-2 font-semibold">Médico Jefe / Enfermero(a) UGCC</div>
+                        <p class="text-slate-500">Gestión de Camas Hospitalarias</p>
+                    </div>
+                    <div>
+                        <div class="border-t border-slate-400 pt-2 font-semibold">Coordinación Central de Pabellones</div>
+                        <p class="text-slate-500">Recibido y Confirmado</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="bg-slate-100 px-6 py-4 flex justify-between items-center no-print border-t border-slate-200">
+                <span class="text-xs text-slate-500">El documento se generará en formato PDF idéntico al estándar oficial.</span>
+                <div class="flex space-x-3">
+                    <button onclick="closePabellonModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800">
+                        Cerrar
+                    </button>
+                    <button onclick="printPabellonDoc()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2 rounded-lg font-medium shadow transition">
+                        <i class="fa-solid fa-print mr-1.5"></i> Imprimir Directo
+                    </button>
+                    <button onclick="downloadPabellonPDF()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow transition">
+                        <i class="fa-solid fa-file-pdf mr-1.5"></i> Descargar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL: EDIT BED / NOVEDADES -->
+    <div id="modal-edit-bed" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-slate-900 text-base" id="edit-bed-title">Editar Cama</h3>
+            <form id="form-edit-bed" onsubmit="saveBedChanges(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="edit-bed-id">
+                
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Estado Cama</label>
+                    <select id="edit-bed-status" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-brand-500 focus:border-brand-500">
+                        <option value="DISPONIBLE">DISPONIBLE</option>
+                        <option value="OCUPADA">OCUPADA</option>
+                        <option value="SALIDA_UPC">SALIDA UPC / PABELLÓN</option>
+                        <option value="BLOQUEADA">BLOQUEADA / FALLA TECNICA</option>
+                        <option value="ASEO">EN ASEO / ASEO TERMINAL</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nombre Paciente</label>
+                    <input type="text" id="edit-bed-patient" class="w-full border border-slate-300 rounded-lg p-2" placeholder="Nombre completo">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">RUT Paciente</label>
+                        <input type="text" id="edit-bed-rut" class="w-full border border-slate-300 rounded-lg p-2" placeholder="12.345.678-9">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Edad</label>
+                        <input type="text" id="edit-bed-age" class="w-full border border-slate-300 rounded-lg p-2" placeholder="Ej: 45 años">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Diagnóstico</label>
+                    <input type="text" id="edit-bed-dx" class="w-full border border-slate-300 rounded-lg p-2" placeholder="Diagnóstico principal">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3 border-t">
+                    <button type="button" onclick="closeEditBedModal()" class="px-3 py-2 border rounded-lg text-slate-600">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg font-semibold">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- JAVASCRIPT APPLICATION CORE LOGIC                         -->
+    <!-- ========================================================= -->
+    <script>
+        // ---------------------------------------------------------------
+        // AUTENTICACIÓN REAL CON SUPABASE (Auth + Postgres)
+        // Las contraseñas NUNCA se manejan en texto plano acá: Supabase
+        // Auth las hashea (bcrypt) y las valida en su servidor. Este
+        // frontend solo envía usuario/clave por HTTPS y recibe una sesión.
+        //
+        // ANTES DE USAR — reemplaza estas 2 constantes con los datos de
+        // TU proyecto (Supabase Dashboard > Project Settings > API):
+        // ---------------------------------------------------------------
+        const SUPABASE_URL = 'https://pebrjdqvvexoefvytoex.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HVzRa4gsMNcv1jbpNrof7w_pTU6t7PS';
+
+        // Cliente de Supabase (usa el SDK cargado por CDN en el <head>)
+        const supabaseClient = (SUPABASE_URL.includes('TU-PROYECTO'))
+            ? null
+            : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Supabase Auth requiere un "email"; como este sistema usa nombres
+        // de usuario simples, generamos un correo interno determinístico.
+        // Esto NO envía correos reales, es solo el identificador de Auth.
+        function usuarioAEmail(usuario) {
+            return `${usuario.trim().toLowerCase().replace(/\s+/g, '')}@gestorcamas.local`;
+        }
+
+        function mostrarTabLogin(tab) {
+            const esLogin = tab === 'login';
+            document.getElementById('panel-login').classList.toggle('hidden', !esLogin);
+            document.getElementById('panel-registro').classList.toggle('hidden', esLogin);
+            document.getElementById('tab-btn-login').classList.toggle('text-slate-900', esLogin);
+            document.getElementById('tab-btn-login').classList.toggle('border-indigo-500', esLogin);
+            document.getElementById('tab-btn-login').classList.toggle('text-slate-400', !esLogin);
+            document.getElementById('tab-btn-login').classList.toggle('border-transparent', !esLogin);
+            document.getElementById('tab-btn-registro').classList.toggle('text-slate-900', !esLogin);
+            document.getElementById('tab-btn-registro').classList.toggle('border-indigo-500', !esLogin);
+            document.getElementById('tab-btn-registro').classList.toggle('text-slate-400', esLogin);
+            document.getElementById('tab-btn-registro').classList.toggle('border-transparent', esLogin);
+        }
+
+        function verificarConexionSupabase(errorEl) {
+            if (!supabaseClient) {
+                errorEl.innerText = 'Supabase no está configurado todavía: define SUPABASE_URL y SUPABASE_ANON_KEY en el script.';
+                errorEl.classList.remove('hidden');
+                return false;
+            }
+            return true;
+        }
+
+        async function iniciarSesion(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('login-error');
+            errorEl.classList.add('hidden');
+            if (!verificarConexionSupabase(errorEl)) return;
+
+            const usuario = document.getElementById('login-usuario').value.trim();
+            const clave = document.getElementById('login-clave').value;
+            const turno = document.getElementById('login-turno').value;
+            const area = document.getElementById('login-area').value;
+            const boton = event.submitter;
+            if (boton) { boton.disabled = true; boton.innerText = 'Ingresando...'; }
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: usuarioAEmail(usuario),
+                password: clave
+            });
+
+            if (error) {
+                console.error('Supabase login error:', error);
+                errorEl.innerText = `Usuario o contraseña incorrectos. (${error.message})`;
+                errorEl.classList.remove('hidden');
+                if (boton) { boton.disabled = false; boton.innerText = 'Ingresar al Panel'; }
+                return;
+            }
+
+            // Trae el perfil (rol/permiso) desde la tabla "perfiles"
+            const { data: perfil, error: errorPerfil } = await supabaseClient
+                .from('perfiles')
+                .select('usuario, rol, permiso')
+                .eq('id', data.user.id)
+                .single();
+
+            if (errorPerfil || !perfil) {
+                errorEl.innerText = 'Tu cuenta no tiene un perfil asociado. Contacta al administrador.';
+                errorEl.classList.remove('hidden');
+                await supabaseClient.auth.signOut();
+                if (boton) { boton.disabled = false; boton.innerText = 'Ingresar al Panel'; }
+                return;
+            }
+
+            abrirSesion({ usuario: perfil.usuario, rol: perfil.rol, permiso: perfil.permiso, turno, area });
+        }
+
+        function ingresarInvitado() {
+            // El modo Invitado es solo local (no crea sesión en Supabase): consulta sin cuenta.
+            const turno = document.getElementById('login-turno').value;
+            const area = document.getElementById('login-area').value;
+            abrirSesion({ usuario: 'Invitado', rol: 'invitado', permiso: 'lectura', turno, area });
+        }
+
+        async function registrarOperador(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('registro-error');
+            const okEl = document.getElementById('registro-ok');
+            errorEl.classList.add('hidden');
+            okEl.classList.add('hidden');
+            if (!verificarConexionSupabase(errorEl)) return;
+
+            const usuario = document.getElementById('reg-usuario').value.trim();
+            const clave = document.getElementById('reg-clave').value;
+            const permiso = document.getElementById('reg-permiso').value; // 'lectura' | 'escritura'
+            const turno = document.getElementById('reg-turno').value;
+            const area = document.getElementById('reg-area').value;
+            const boton = event.submitter;
+            if (boton) { boton.disabled = true; boton.innerText = 'Registrando...'; }
+
+            // 1) Crea la cuenta en Supabase Auth (clave queda hasheada en el servidor)
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: usuarioAEmail(usuario),
+                password: clave
+            });
+
+            if (error) {
+                errorEl.innerText = error.message.includes('already registered')
+                    ? 'Ese nombre de usuario ya existe, elige otro.'
+                    : `No se pudo registrar: ${error.message}`;
+                errorEl.classList.remove('hidden');
+                if (boton) { boton.disabled = false; boton.innerText = 'Registrar Operador'; }
+                return;
+            }
+
+            // 2) Crea su fila de perfil (rol/permiso) en la tabla "perfiles"
+            const { error: errorPerfil } = await supabaseClient.from('perfiles').insert({
+                id: data.user.id,
+                usuario,
+                rol: 'operador',
+                permiso, // 'lectura' | 'escritura'
+                turno,
+                area
+            });
+
+            if (errorPerfil) {
+                errorEl.innerText = `Cuenta creada, pero falló el perfil: ${errorPerfil.message}`;
+                errorEl.classList.remove('hidden');
+                if (boton) { boton.disabled = false; boton.innerText = 'Registrar Operador'; }
+                return;
+            }
+
+            okEl.innerText = `Operador "${usuario}" registrado con permiso de ${permiso === 'escritura' ? 'Escritura' : 'Solo Lectura'}.`
+                + (data.session ? ' Ya puedes usar el panel.' : ' Revisa si tu proyecto Supabase requiere confirmar el correo antes de iniciar sesión.');
+            okEl.classList.remove('hidden');
+            document.getElementById('panel-registro').reset();
+            if (boton) { boton.disabled = false; boton.innerText = 'Registrar Operador'; }
+
+            if (data.session) {
+                // Confirmación de email desactivada en el proyecto -> queda logueado de inmediato
+                abrirSesion({ usuario, rol: 'operador', permiso, turno, area });
+            } else {
+                setTimeout(() => mostrarTabLogin('login'), 1500);
+            }
+        }
+
+        function abrirSesion(sesion) {
+            document.getElementById('login-screen').classList.add('hidden');
+            const shell = document.getElementById('app-shell');
+            shell.classList.remove('hidden');
+            shell.classList.add('flex');
+            aplicarSesionEnInterfaz(sesion);
+        }
+
+        async function cerrarSesion() {
+            if (supabaseClient) await supabaseClient.auth.signOut();
+            location.reload();
+        }
+
+        function aplicarSesionEnInterfaz(sesion) {
+            const nombreEl = document.getElementById('user-badge-nombre');
+            const rolEl = document.getElementById('user-badge-rol');
+            if (nombreEl) nombreEl.innerText = sesion.usuario;
+            if (rolEl) {
+                const etiquetaRol = sesion.rol === 'admin' ? 'Administrador'
+                    : sesion.rol === 'invitado' ? 'Invitado · Solo Lectura'
+                    : (sesion.permiso === 'escritura' ? 'Operador · Escritura' : 'Operador · Solo Lectura');
+                rolEl.innerText = `${etiquetaRol} · Turno ${sesion.turno} · ${sesion.area}`;
+            }
+
+            // Los administradores siempre tienen escritura habilitada.
+            const soloLectura = sesion.rol !== 'admin' && sesion.permiso !== 'escritura';
+            document.querySelectorAll('[data-requires-write="true"]').forEach(el => {
+                if (soloLectura) {
+                    el.disabled = true;
+                    el.classList.add('opacity-40', 'cursor-not-allowed');
+                    el.title = 'Tu cuenta tiene permiso de Solo Lectura';
+                } else {
+                    el.disabled = false;
+                    el.classList.remove('opacity-40', 'cursor-not-allowed');
+                    el.title = '';
+                }
+            });
+        }
+
+        // Al cargar la página: si Supabase ya tiene una sesión válida (token
+        // guardado por el propio SDK), la restauramos sin pedir login de nuevo.
+        async function restaurarSesion() {
+            if (!supabaseClient) return false;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return false;
+
+            const { data: perfil } = await supabaseClient
+                .from('perfiles')
+                .select('usuario, rol, permiso')
+                .eq('id', session.user.id)
+                .single();
+
+            if (!perfil) return false;
+
+            abrirSesion({
+                usuario: perfil.usuario,
+                rol: perfil.rol,
+                permiso: perfil.permiso,
+                turno: document.getElementById('login-turno')?.value || 'Largo',
+                area: document.getElementById('login-area')?.value || 'Ambas'
+            });
+            return true;
+        }
+
+        // Configuration & URLs for Shared Google Sheets across all modules
+        // ID real de la planilla "NOVEDADES ADULTO Y PEDIATRÍA 2026"
+        const NOVEDADES_SPREADSHEET_ID = '1hDtmpPngKJhQ_8Tw6E53vTjiiB-4KUGBWdosvfelisM';
+        // gid de la 4ta hoja "PABELLON/TRASLADOS" dentro de esa misma planilla
+        const PABELLON_TRASLADOS_GID = '947824045';
+        // ID real de la planilla "INFORME DE TURNO"
+        const INFORME_TURNO_SPREADSHEET_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0';
+
+        const defaultSheetUrls = {
+            novedades: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            inhabil: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            informe: `https://docs.google.com/spreadsheets/d/${INFORME_TURNO_SPREADSHEET_ID}/edit`,
+            cdt: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            'hec-huap': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            macrorred: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            'ref-adulto': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            'ref-pede': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`
+        };
+
+        // ---------------------------------------------------------------
+        // KPIs Camas Críticas (UCI/UTI Adulto y UCIP/UTIP Pediatría)
+        // Fuente: Google Sheet "INFORME DE TURNO"
+        //   - Pestaña "adulto"    · D49 = Total camas UCI · E49 = Total camas UTI
+        //   - Pestaña "PEDIATRIA" · D55 = Total camas UCIP · E55 = Total camas UTIP
+        // El sheet debe estar compartido como "Cualquier usuario con el
+        // enlace puede ver" para que la lectura funcione desde el navegador.
+        // ---------------------------------------------------------------
+
+        // Mapa de celdas exactas por indicador: total de camas y camas ocupadas.
+        // Disponibles y % de ocupación se calculan a partir de ambas.
+        const CELDAS_CAMAS_CRITICAS = {
+            'uci-adulto': { sheet: 'adulto',    totalCell: 'D49', ocupadasCell: 'D50' },
+            'uti-adulto': { sheet: 'adulto',    totalCell: 'E49', ocupadasCell: 'E50' },
+            'ucip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'D55', ocupadasCell: 'D56' },
+            'utip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'E55', ocupadasCell: 'E56' }
+        };
+
+        // Valores de respaldo mientras se conecta la hoja real / si falla la lectura
+        const kpiCamasFallback = {
+            'uci-adulto': { total: 24, ocupadas: 22 },
+            'uti-adulto': { total: 30, ocupadas: 27 },
+            'ucip-pedi':  { total: 12, ocupadas: 10 },
+            'utip-pedi':  { total: 10, ocupadas: 9 }
+        };
+
+        // Lee una única celda (ej: "D49") de una pestaña de Google Sheets
+        // vía la API pública gviz (JSON), usando el parámetro "range".
+        async function leerCeldaGviz(sheetName, cellRef) {
+            const url = `https://docs.google.com/spreadsheets/d/${INFORME_TURNO_SPREADSHEET_ID}/gviz/tq`
+                + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${cellRef}`;
+            const res = await fetch(url);
+            const text = await res.text();
+            const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+            const cell = json.table?.rows?.[0]?.c?.[0];
+            const valor = cell ? Number(cell.v ?? cell.f) : NaN;
+            return isNaN(valor) ? null : valor;
+        }
+
+        function pintarKpiCard(prefix, data) {
+            document.getElementById(`dash-${prefix}-total`).innerText = data.total;
+            if (data.ocupadas != null) {
+                const occ = data.total > 0 ? Math.round((data.ocupadas / data.total) * 100) : 0;
+                const disponibles = Math.max(data.total - data.ocupadas, 0);
+                document.getElementById(`dash-${prefix}-occ`).innerText = `${occ}%`;
+                document.getElementById(`dash-${prefix}-free`).innerText = `${disponibles} Disponibles`;
+                const bar = document.getElementById(`dash-${prefix}-bar`);
+                if (bar) bar.style.width = `${occ}%`;
+            } else {
+                // Aún no hay celda configurada para "ocupadas": solo mostramos el total
+                document.getElementById(`dash-${prefix}-occ`).innerText = '—';
+                document.getElementById(`dash-${prefix}-free`).innerText = 'Falta celda ocupadas';
+            }
+        }
+
+        // Reintenta leerCeldaGviz hasta `intentos` veces (con pequeña pausa) antes
+        // de darse por vencido, para absorber cortes de red momentáneos.
+        async function leerCeldaGvizConReintento(sheetName, cellRef, intentos = 2) {
+            for (let i = 0; i < intentos; i++) {
+                try {
+                    return await leerCeldaGviz(sheetName, cellRef);
+                } catch (err) {
+                    if (i === intentos - 1) throw err;
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+        }
+
+        async function cargarKpisCamasCriticas() {
+            for (const prefix of Object.keys(CELDAS_CAMAS_CRITICAS)) {
+                const cfg = CELDAS_CAMAS_CRITICAS[prefix];
+                let total = null;
+                let ocupadas = null;
+
+                try {
+                    total = await leerCeldaGvizConReintento(cfg.sheet, cfg.totalCell);
+                } catch (err) {
+                    console.warn(`No se pudo leer ${cfg.sheet}!${cfg.totalCell} (total, ${prefix}) desde "INFORME DE TURNO".`, err);
+                }
+
+                if (cfg.ocupadasCell) {
+                    try {
+                        ocupadas = await leerCeldaGvizConReintento(cfg.sheet, cfg.ocupadasCell);
+                    } catch (err) {
+                        console.warn(`No se pudo leer ${cfg.sheet}!${cfg.ocupadasCell} (ocupadas, ${prefix}) desde "INFORME DE TURNO".`, err);
+                    }
+                }
+
+                if (total == null) {
+                    // No se pudo obtener el total ni tras reintentar -> usar respaldo completo
+                    console.warn(`Usando dato de ejemplo para "${prefix}".`);
+                    pintarKpiCard(prefix, kpiCamasFallback[prefix]);
+                } else {
+                    pintarKpiCard(prefix, { total, ocupadas });
+                }
+            }
+
+            const upd = document.getElementById('dash-kpi-updated');
+            if (upd) upd.innerText = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Abre la hoja "PABELLON/TRASLADOS" (4ta pestaña) del archivo
+        // "NOVEDADES ADULTO Y PEDIATRÍA 2026" en formato PDF listo para imprimir/descargar.
+        function imprimirSolicitudPabellon() {
+            const printUrl = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/export`
+                + `?format=pdf&gid=${PABELLON_TRASLADOS_GID}`
+                + `&portrait=false&size=A4&fitw=true`
+                + `&gridlines=false&printtitle=false&sheetnames=false`
+                + `&pagenumbers=false&attachment=false`;
+            window.open(printUrl, '_blank');
+        }
+
+        function getSheetUrl(modId) {
+            // Check legacy local storage first for novedades
+            if (modId === 'novedades' && localStorage.getItem('novedades_sheet_url')) {
+                return localStorage.getItem('novedades_sheet_url');
+            }
+            return localStorage.getItem(`sheet_url_${modId}`) || defaultSheetUrls[modId] || defaultSheetUrls.novedades;
+        }
+
+        function openModuleSheet(modId) {
+            const url = getSheetUrl(modId);
+            window.open(url, '_blank');
+        }
+
+        function openNovedadesSheet() {
+            navigateToModule('novedades');
+        }
+
+        function openNovedadesSheetDirect() {
+            openModuleSheet('novedades');
+        }
+
+        function configureSheetUrl(modId, modName) {
+            const currentUrl = getSheetUrl(modId);
+            const newUrl = prompt(`Ingrese la URL de Google Sheets para "${modName}":`, currentUrl);
+            if (newUrl && newUrl.trim() !== '') {
+                localStorage.setItem(`sheet_url_${modId}`, newUrl.trim());
+                if (modId === 'novedades') {
+                    localStorage.setItem('novedades_sheet_url', newUrl.trim());
+                }
+                alert(`¡Enlace de Google Sheets para "${modName}" actualizado correctamente!`);
+            }
+        }
+
+        function navigateToModule(modId) {
+            // Open shared Google Sheet in a new tab when clicking module
+            openModuleSheet(modId);
+            // Switch current application view to selected module
+            switchModule(modId);
+        }
+
+        // Data Structures & Initial Mock Data (Adult Enero 2026 & Pediatría 2025 Layout)
+        const bedsData = [
+            // UPC Adulto
+            { id: 'UCI-01', sector: 'ADULTO_UPC', name: 'UCI Cama 01', status: 'OCUPADA', patient: 'Juan Pérez Soto', rut: '11.234.567-8', age: '62 años', dx: 'Shock Séptico Foco Abdominal', pabellon: false },
+            { id: 'UCI-02', sector: 'ADULTO_UPC', name: 'UCI Cama 02', status: 'SALIDA_UPC', patient: 'María González L.', rut: '14.890.123-K', age: '54 años', dx: 'Post-Op Neurocirugía hematoma', pabellon: true },
+            { id: 'UCI-03', sector: 'ADULTO_UPC', name: 'UCI Cama 03', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'UTI-01', sector: 'ADULTO_UPC', name: 'UTI Cama 01', status: 'OCUPADA', patient: 'Carlos Rojas M.', rut: '9.876.543-2', age: '71 años', dx: 'Insuficiencia Respiratoria Neumonía', pabellon: false },
+            { id: 'UTI-02', sector: 'ADULTO_UPC', name: 'UTI Cama 02', status: 'SALIDA_UPC', patient: 'Elena Torres B.', rut: '16.543.210-4', age: '48 años', dx: 'Aneurisma Aorta Reintervención', pabellon: true },
+            { id: 'UTI-03', sector: 'ADULTO_UPC', name: 'UTI Cama 03', status: 'ASEO', patient: '', rut: '', age: '', dx: '', pabellon: false },
+
+            // Cuidados Medios Adultos 2026
+            { id: 'MED-101', sector: 'ADULTO_MED', name: 'Sala 1 - Cama A', status: 'OCUPADA', patient: 'Pedro Castillo F.', rut: '8.111.222-3', age: '78 años', dx: 'ACV Isquémico evolución', pabellon: false },
+            { id: 'MED-102', sector: 'ADULTO_MED', name: 'Sala 1 - Cama B', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'MED-103', sector: 'ADULTO_MED', name: 'Sala 2 - Cama A', status: 'BLOQUEADA', patient: '', rut: '', age: '', dx: 'Falla red de oxígeno', pabellon: false },
+            { id: 'MED-104', sector: 'ADULTO_MED', name: 'Sala 2 - Cama B', status: 'OCUPADA', patient: 'Rosa Diaz H.', rut: '13.444.555-6', age: '65 años', dx: 'Descompensación Diabética', pabellon: false },
+
+            // Pediatría UPC Infantil
+            { id: 'UCIP-01', sector: 'PEDE_UPC', name: 'UCI Pediátrica 01', status: 'OCUPADA', patient: 'L. M. (Lactante)', rut: '25.678.901-2', age: '8 meses', dx: 'Bronquiolitis Neumocócica', pabellon: false },
+            { id: 'UCIP-02', sector: 'PEDE_UPC', name: 'UCI Pediátrica 02', status: 'SALIDA_UPC', patient: 'Matías Silva K.', rut: '24.111.333-5', age: '4 años', dx: 'Post-op Apendicitis Complicada', pabellon: true },
+            { id: 'UTIP-01', sector: 'PEDE_UPC', name: 'UTI Pediátrica 01', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
+
+            // Pediatría Sala General 2025
+            { id: 'PED-201', sector: 'PEDE_SALA', name: 'Pediatría Sala 3 - A', status: 'OCUPADA', patient: 'Sofía Vargas T.', rut: '23.456.789-0', age: '7 años', dx: 'Neumonía Basal Izquierda', pabellon: false },
+            { id: 'PED-202', sector: 'PEDE_SALA', name: 'Pediatría Sala 3 - B', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
+        ];
+
+        // Inhabiles Mock
+        const inhabilLogs = [
+            { date: '02/08/2026 23:15', patient: 'Hernán Bravo G.', origin: 'Urgencia Adulto', bed: 'UTI Cama 01', manager: 'Dra. M. Soto', obs: 'Ingreso nocturno directo VMI', status: 'COMPLETADO' },
+            { date: '03/08/2026 04:30', patient: 'Camila Muñoz F.', origin: 'Maternidad', bed: 'MED-102', manager: 'EU R. Tapia', obs: 'Puerperio patológico traslado', status: 'COMPLETADO' }
+        ];
+
+        // CDT Requests Mock
+        const cdtRequests = [
+            { id: 'CDT-01', priority: 'ALTA', date: '03/08/2026', patient: 'Gabriel Arancibia', spec: 'Oncología Médica', req: 'Cama Media para Quimioterapia', status: 'EN ESPERA' },
+            { id: 'CDT-02', priority: 'MEDIA', date: '02/08/2026', patient: 'Ana Maria Lopez', spec: 'Traumatología', req: 'Preparación Quirúrgica Cadera', status: 'ASIGNADA' }
+        ];
+
+        // HEC / HUAP Cases
+        const hecHuapCases = [
+            { type: 'HEC', patient: 'Roberto Araya', age: '59', dx: 'Sepsis Urinaria', bedReq: 'UTI Adulto', status: 'Derivación Aceptada - En Tránsito' },
+            { type: 'HEC', patient: 'Clara Fuentes', age: '42', dx: 'Politrauma moderado', bedReq: 'Cuidados Medios', status: 'Evaluación Médica UGCC' },
+            { type: 'HUAP', patient: 'Esteban Morales', age: '33', dx: 'TEC Abierto ventilado', bedReq: 'UCI Adulto Prioridad 1', status: 'Cupo Reservado Cama UCI-03' },
+            { type: 'HUAP', patient: 'Lucía Benítez', age: '67', dx: 'Gran Quemado 20%', bedReq: 'UCI Quemados', status: 'Pendiente Confirmación Macrorred' },
+            { type: 'HUAP', patient: 'Jorge Valenzuela', age: '50', dx: 'Post-Paro Cardiorrespiratorio', bedReq: 'UCI Adulto', status: 'En Lista Espera UGCC' }
+        ];
+
+        // Macrorred Cases
+        const macrorredCases = [
+            { net: 'RED PÚBLICA', hospital: 'Hospital San Borja Arriarán', patient: 'Felipe Sanhueza', dx: 'CIRUGÍA VASCULAR', bedType: 'UPC UCI', status: 'COORDINADO' },
+            { net: 'PRIVADO / EXTRA-SISTEMA', hospital: 'Clínica Dávila', patient: 'Patricia Osorio', dx: 'ECMO RESPIRATORIO', bedType: 'UCI ADULTO', status: 'EN GESTIÓN' }
+        ];
+
+        // Referral Doctors Directory
+        const refAdultoData = [
+            { spec: 'Jefatura UGCC Central', doctor: 'Dr. Fernando Medina', phone: '+56 9 9123 4567', email: 'fmedina@hospital central.cl', schedule: '24/7 Presencial/Llamada' },
+            { spec: 'Jefe UPC Adultos (UCI/UTI)', doctor: 'Dra. Claudia Sepúlveda', phone: '+56 9 8234 5678', email: 'csepulveda@hospital central.cl', schedule: '08:00 - 17:00' },
+            { spec: 'Coordinador Pabellón Adulto', doctor: 'Dr. Marcelo Rivas', phone: '+56 9 7345 6789', email: 'mrivas@hospital central.cl', schedule: 'Turno Diurno' }
+        ];
+
+        const refPedeData = [
+            { spec: 'Jefatura Pediatría y Neonatología', doctor: 'Dra. Andrea Morales', phone: '+56 9 6456 7890', email: 'amorales@hospital central.cl', schedule: 'Jornada Completa' },
+            { spec: 'Coordinador UPC Pediátrica', doctor: 'Dr. Gonzalo Vidal', phone: '+56 9 5567 8901', email: 'gvidal@hospital central.cl', schedule: 'Turno 24 hrs' },
+            { spec: 'Referente Obstetricia y Ginecología', doctor: 'Dra. Patricia Figueroa', phone: '+56 9 4678 9012', email: 'pfigueroa@hospital central.cl', schedule: 'Guardia Turno' }
+        ];
+
+
+        // Clock Initialization
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleString('es-CL', {
+                dateStyle: 'medium',
+                timeStyle: 'medium'
+            });
+            document.getElementById('pab-doc-date').innerText = now.toLocaleDateString('es-CL');
+            document.getElementById('informe-fecha').innerText = now.toLocaleDateString('es-CL');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Switch Module Navigation
+        function switchModule(modId) {
+            // Hide all modules
+            document.querySelectorAll('.module-section').forEach(el => el.classList.add('hidden'));
+            // Remove active styles from nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-brand-600', 'bg-brand-50', 'border', 'border-brand-200');
+                btn.classList.add('text-slate-600');
+            });
+
+            // Show selected module
+            const targetMod = document.getElementById(`mod-${modId}`);
+            if (targetMod) targetMod.classList.remove('hidden');
+
+            // Highlight nav button
+            const targetNav = document.getElementById(`nav-${modId}`);
+            if (targetNav) {
+                targetNav.classList.add('active', 'text-brand-600', 'bg-brand-50', 'border', 'border-brand-200');
+            }
+
+            // Trigger specific module renders
+            if (modId === 'novedades') renderBedPlan();
+            if (modId === 'inhabil') renderInhabilTable();
+            if (modId === 'cdt') renderCdtTable();
+            if (modId === 'hec-huap') renderHecHuapList();
+            if (modId === 'macrorred') renderMacrorredTable();
+            if (modId === 'ref-adulto') renderRefAdulto();
+            if (modId === 'ref-pede') renderRefPede();
+        }
+
+
+        // Render Bed Plan (Novedades)
+        function renderBedPlan() {
+            const filter = document.getElementById('bed-sector-filter').value;
+            const container = document.getElementById('visual-bed-plan');
+            const tableBody = document.getElementById('excel-table-body');
+            
+            container.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            // Group filtered beds by sector
+            const filteredBeds = filter === 'ALL' ? bedsData : bedsData.filter(b => b.sector === filter);
+
+            const sectors = {
+                'ADULTO_UPC': 'Adultos: Unidad de Paciente Crítico (UCI / UTI)',
+                'ADULTO_MED': 'Adultos: Cuidados Medios y Básicos (Plano 2026)',
+                'PEDE_UPC': 'Pediatría: UPC Infantil (UCI / UTI Pediátrica)',
+                'PEDE_SALA': 'Pediatría: Salas de Hospitalización General 2025'
+            };
+
+            // Render Visual Cards Layout
+            Object.keys(sectors).forEach(secKey => {
+                const secBeds = filteredBeds.filter(b => b.sector === secKey);
+                if (secBeds.length === 0) return;
+
+                const secWrapper = document.createElement('div');
+                secWrapper.className = 'bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3';
+                secWrapper.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                            <i class="fa-solid fa-layer-group text-brand-500 mr-2"></i> ${sectors[secKey]}
+                        </h3>
+                        <span class="text-xs text-slate-500 font-medium">${secBeds.length} Camas totales</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        ${secBeds.map(bed => getBedCardHTML(bed)).join('')}
+                    </div>
+                `;
+                container.appendChild(secWrapper);
+            });
+
+            // Render Excel Table View
+            filteredBeds.forEach(bed => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-2.5 border border-slate-200 font-bold text-slate-900">${bed.name}</td>
+                    <td class="p-2.5 border border-slate-200">${bed.sector}</td>
+                    <td class="p-2.5 border border-slate-200">${getStatusBadgeHTML(bed.status)}</td>
+                    <td class="p-2.5 border border-slate-200 font-medium">${bed.patient || '---'}</td>
+                    <td class="p-2.5 border border-slate-200">${bed.rut || '---'}</td>
+                    <td class="p-2.5 border border-slate-200">${bed.age || '---'}</td>
+                    <td class="p-2.5 border border-slate-200">${bed.dx || '---'}</td>
+                    <td class="p-2.5 border border-slate-200 text-center font-bold text-amber-600">${bed.pabellon ? 'SÍ (REQUERIDO)' : 'NO'}</td>
+                    <td class="p-2.5 border border-slate-200 text-center">
+                        <button onclick="openEditBedModal('${bed.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded border border-slate-300 text-xs">
+                            <i class="fa-solid fa-pen"></i> Editar
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function getBedCardHTML(bed) {
+            let statusColor = 'border-slate-200 bg-white';
+            if (bed.status === 'DISPONIBLE') statusColor = 'border-emerald-300 bg-emerald-50/50';
+            if (bed.status === 'OCUPADA') statusColor = 'border-blue-300 bg-blue-50/30';
+            if (bed.status === 'SALIDA_UPC') statusColor = 'border-amber-400 bg-amber-50';
+            if (bed.status === 'BLOQUEADA') statusColor = 'border-rose-300 bg-rose-50/50';
+            if (bed.status === 'ASEO') statusColor = 'border-purple-300 bg-purple-50/50';
+
+            return `
+                <div class="border ${statusColor} rounded-xl p-3.5 flex flex-col justify-between space-y-2 shadow-xs hover:shadow transition relative">
+                    <div class="flex justify-between items-start">
+                        <span class="font-bold text-xs text-slate-900 tracking-wide">${bed.name}</span>
+                        ${getStatusBadgeHTML(bed.status)}
+                    </div>
+                    
+                    <div class="text-xs space-y-1">
+                        ${bed.patient ? `
+                            <p class="font-semibold text-slate-800 line-clamp-1"><i class="fa-solid fa-user text-slate-400 mr-1"></i> ${bed.patient}</p>
+                            <p class="text-slate-500"><i class="fa-solid fa-id-card text-slate-400 mr-1"></i> ${bed.rut} (${bed.age})</p>
+                            <p class="text-slate-600 italic line-clamp-1">${bed.dx}</p>
+                        ` : `
+                            <p class="text-slate-400 italic">Sin paciente asignado</p>
+                        `}
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                        ${bed.pabellon ? `
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-amber-300">
+                                <i class="fa-solid fa-scissors mr-1"></i> Pabellón
+                            </span>
+                        ` : '<span></span>'}
+                        <button onclick="openEditBedModal('${bed.id}')" class="text-brand-600 hover:text-brand-800 font-semibold">
+                            Gestionar <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusBadgeHTML(status) {
+            switch(status) {
+                case 'DISPONIBLE':
+                    return `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">DISPONIBLE</span>`;
+                case 'OCUPADA':
+                    return `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-300">OCUPADA</span>`;
+                case 'SALIDA_UPC':
+                    return `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">SALIDA UPC</span>`;
+                case 'BLOQUEADA':
+                    return `<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-300">BLOQUEADA</span>`;
+                case 'ASEO':
+                    return `<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-300">EN ASEO</span>`;
+                default:
+                    return `<span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">${status}</span>`;
+            }
+        }
+
+        function toggleViewMode() {
+            const visual = document.getElementById('visual-bed-plan');
+            const excel = document.getElementById('excel-bed-plan');
+            const btn = document.getElementById('toggle-view-btn');
+
+            if (visual.classList.contains('hidden')) {
+                visual.classList.remove('hidden');
+                excel.classList.add('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-table-list mr-1"></i> Modo Excel`;
+            } else {
+                visual.classList.add('hidden');
+                excel.classList.remove('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-grip mr-1"></i> Modo Tarjetas`;
+            }
+        }
+
+
+        function openEditBedModal(bedId) {
+            const bed = bedsData.find(b => b.id === bedId);
+            if (!bed) return;
+
+            document.getElementById('edit-bed-id').value = bed.id;
+            document.getElementById('edit-bed-title').innerText = `Gestionar ${bed.name}`;
+            document.getElementById('edit-bed-status').value = bed.status;
+            document.getElementById('edit-bed-patient').value = bed.patient || '';
+            document.getElementById('edit-bed-rut').value = bed.rut || '';
+            document.getElementById('edit-bed-age').value = bed.age || '';
+            document.getElementById('edit-bed-dx').value = bed.dx || '';
+
+            document.getElementById('modal-edit-bed').classList.remove('hidden');
+        }
+
+        function closeEditBedModal() {
+            document.getElementById('modal-edit-bed').classList.add('hidden');
+        }
+
+        function saveBedChanges(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-bed-id').value;
+            const bed = bedsData.find(b => b.id === id);
+            if (bed) {
+                bed.status = document.getElementById('edit-bed-status').value;
+                bed.patient = document.getElementById('edit-bed-patient').value;
+                bed.rut = document.getElementById('edit-bed-rut').value;
+                bed.age = document.getElementById('edit-bed-age').value;
+                bed.dx = document.getElementById('edit-bed-dx').value;
+                bed.pabellon = (bed.status === 'SALIDA_UPC');
+                
+                renderBedPlan();
+                closeEditBedModal();
+            }
+        }
+
+
+        // Modal & PDF Generator for Pabellones
+        function openPabellonModal() {
+            const pabRows = document.getElementById('pabellon-doc-rows');
+            pabRows.innerHTML = '';
+
+            // Filter beds with SALIDA_UPC or Pabellon status
+            const pabBeds = bedsData.filter(b => b.status === 'SALIDA_UPC' || b.pabellon);
+
+            if (pabBeds.length === 0) {
+                pabRows.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-4 text-center text-slate-400 italic">
+                            No hay camas marcadas para Salida UPC o Requerimiento Pabellón actualmente.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                pabBeds.forEach(bed => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${bed.name}</td>
+                        <td class="p-2 border-r border-slate-300">${bed.sector}</td>
+                        <td class="p-2 border-r border-slate-300 font-semibold">${bed.patient || 'Sin datos'}</td>
+                        <td class="p-2 border-r border-slate-300 font-mono">${bed.rut || '---'}</td>
+                        <td class="p-2 border-r border-slate-300">${bed.dx || '---'}</td>
+                        <td class="p-2 font-semibold text-amber-700">Pabellón Central - Tabla Quirúrgica</td>
+                    `;
+                    pabRows.appendChild(tr);
+                });
+            }
+
+            document.getElementById('modal-pabellon').classList.remove('hidden');
+        }
+
+        function closePabellonModal() {
+            document.getElementById('modal-pabellon').classList.add('hidden');
+        }
+
+        function printPabellonDoc() {
+            window.print();
+        }
+
+        function downloadPabellonPDF() {
+            const element = document.getElementById('pdf-pabellon-content');
+            const opt = {
+                margin:       0.5,
+                filename:     `Solicitud_Pabellones_UPC_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+
+        // Module 3: Horario Inhabil Render
+        function renderInhabilTable() {
+            const tbody = document.getElementById('inhabil-table-body');
+            tbody.innerHTML = inhabilLogs.map(log => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-semibold text-slate-800">${log.date}</td>
+                    <td class="p-3 font-medium">${log.patient}</td>
+                    <td class="p-3 text-slate-600">${log.origin}</td>
+                    <td class="p-3 font-bold text-brand-600">${log.bed}</td>
+                    <td class="p-3 text-slate-600">${log.manager}</td>
+                    <td class="p-3 text-slate-500 italic">${log.obs}</td>
+                    <td class="p-3 text-center"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${log.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function openInhabilModal() {
+            const newPatient = prompt('Ingrese Nombre de Paciente para registro Inhábil:');
+            if (newPatient) {
+                inhabilLogs.unshift({
+                    date: new Date().toLocaleString('es-CL'),
+                    patient: newPatient,
+                    origin: 'Urgencia Nocturna',
+                    bed: 'Asignación Pendiente',
+                    manager: 'EU Turno Noche',
+                    obs: 'Registro ingresado manualmente',
+                    status: 'PENDIENTE'
+                });
+                renderInhabilTable();
+            }
+        }
+
+        // Module 5: CDT Render
+        function renderCdtTable() {
+            const tbody = document.getElementById('cdt-table-body');
+            tbody.innerHTML = cdtRequests.map(req => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${req.priority}</span></td>
+                    <td class="p-3 text-slate-500">${req.date}</td>
+                    <td class="p-3 font-bold text-slate-800">${req.patient}</td>
+                    <td class="p-3 font-medium text-slate-700">${req.spec}</td>
+                    <td class="p-3 text-slate-600">${req.req}</td>
+                    <td class="p-3"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${req.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="alert('Asignación realizada con éxito')" class="bg-brand-600 text-white px-2 py-1 rounded text-[10px] font-bold">Asignar Cama</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openCdtModal() {
+            const p = prompt('Nombre del Paciente Solicitud CDT:');
+            if (p) {
+                cdtRequests.unshift({
+                    id: `CDT-0${cdtRequests.length+1}`,
+                    priority: 'ALTA',
+                    date: new Date().toLocaleDateString('es-CL'),
+                    patient: p,
+                    spec: 'Consulta Médica CDT',
+                    req: 'Evaluación e Ingreso Cama',
+                    status: 'EN ESPERA'
+                });
+                renderCdtTable();
+            }
+        }
+
+        // Module 6: HEC & HUAP Render
+        function renderHecHuapList() {
+            const hecContainer = document.getElementById('hec-list-container');
+            const huapContainer = document.getElementById('huap-list-container');
+            
+            const hecItems = hecHuapCases.filter(c => c.type === 'HEC');
+            const huapItems = hecHuapCases.filter(c => c.type === 'HUAP');
+
+            document.getElementById('hec-count').innerText = `${hecItems.length} Casos`;
+            document.getElementById('huap-count').innerText = `${huapItems.length} Casos`;
+
+            hecContainer.innerHTML = hecItems.map(c => getHecHuapCardHTML(c)).join('');
+            huapContainer.innerHTML = huapItems.map(c => getHecHuapCardHTML(c)).join('');
+        }
+
+        function getHecHuapCardHTML(c) {
+            return `
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+                    <div class="flex justify-between font-bold text-slate-800">
+                        <span>${c.patient} (${c.age}a)</span>
+                        <span class="text-brand-600 font-mono">${c.bedReq}</span>
+                    </div>
+                    <p class="text-slate-600 italic">${c.dx}</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Estado: ${c.status}</p>
+                </div>
+            `;
+        }
+
+        function openHecHuapModal() {
+            const type = confirm('¿Pulse ACEPTAR para HEC o CANCELAR para HUAP?') ? 'HEC' : 'HUAP';
+            const name = prompt(`Ingrese Nombre Paciente para ${type}:`);
+            if (name) {
+                hecHuapCases.push({
+                    type: type,
+                    patient: name,
+                    age: '45',
+                    dx: 'Caso ingresado por UGCC',
+                    bedReq: 'Requerimiento UPC',
+                    status: 'En evaluación'
+                });
+                renderHecHuapList();
+            }
+        }
+
+        // Module 7: Macrorred Render
+        function renderMacrorredTable() {
+            const tbody = document.getElementById('macrorred-table-body');
+            tbody.innerHTML = macrorredCases.map(m => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-semibold text-slate-700">${m.net}</td>
+                    <td class="p-3 font-bold text-slate-800">${m.hospital}</td>
+                    <td class="p-3 text-slate-700">${m.patient}</td>
+                    <td class="p-3 text-slate-600">${m.dx}</td>
+                    <td class="p-3 font-bold text-brand-600">${m.bedType}</td>
+                    <td class="p-3 text-center"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${m.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function openMacrorredModal() {
+            const hosp = prompt('Nombre del centro o clínica derivadora:');
+            if (hosp) {
+                macrorredCases.push({
+                    net: 'MACRORRED REGIONAL',
+                    hospital: hosp,
+                    patient: 'Paciente Derivado',
+                    dx: 'Derivación extra-sistema',
+                    bedType: 'UCI ADULTO',
+                    status: 'SOLICITADO'
+                });
+                renderMacrorredTable();
+            }
+        }
+
+        // Modules 8 & 9: Doctor Directories
+        function renderRefAdulto() {
+            const container = document.getElementById('ref-adulto-container');
+            container.innerHTML = refAdultoData.map(d => getDoctorCardHTML(d)).join('');
+        }
+
+        function renderRefPede() {
+            const container = document.getElementById('ref-pede-container');
+            container.innerHTML = refPedeData.map(d => getDoctorCardHTML(d)).join('');
+        }
+
+        function getDoctorCardHTML(d) {
+            return `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2 hover:border-brand-500 transition">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">${d.spec}</span>
+                    <h4 class="font-bold text-slate-900 text-sm">${d.doctor}</h4>
+                    <div class="text-xs space-y-1 text-slate-600">
+                        <p><i class="fa-solid fa-phone text-slate-400 mr-2"></i> ${d.phone}</p>
+                        <p><i class="fa-solid fa-envelope text-slate-400 mr-2"></i> ${d.email}</p>
+                        <p><i class="fa-solid fa-calendar-check text-slate-400 mr-2"></i> ${d.schedule}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterDirectory(type) {
+            const query = document.getElementById(`search-ref-${type}`).value.toLowerCase();
+            const data = type === 'adulto' ? refAdultoData : refPedeData;
+            const container = document.getElementById(`ref-${type}-container`);
+
+            const filtered = data.filter(d => 
+                d.doctor.toLowerCase().includes(query) || 
+                d.spec.toLowerCase().includes(query)
+            );
+
+            container.innerHTML = filtered.map(d => getDoctorCardHTML(d)).join('');
+        }
+
+        // Initialize Default View
+        window.onload = async function() {
+            if (!supabaseClient) {
+                document.getElementById('supabase-config-warning').classList.remove('hidden');
+            }
+            renderBedPlan();
+            cargarKpisCamasCriticas();
+            await restaurarSesion(); // si hay sesión activa de Supabase, salta el login
+        };
+    </script>
+</body>
+</html>

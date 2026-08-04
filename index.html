@@ -1255,38 +1255,24 @@
 
             if (boton) { boton.disabled = true; boton.innerText = 'Registrando...'; }
 
-            // 1) Crea la cuenta en Supabase Auth con el Gmail real
-            //    (clave hasheada en el servidor; Supabase envía un correo
-            //    de confirmación real a esa dirección si "Confirm email"
-            //    está activado en el proyecto).
+            // 1) Crea la cuenta en Supabase Auth con el Gmail real.
+            //    Enviamos usuario/permiso/turno/área como metadata: un
+            //    trigger en el servidor (on_auth_user_created) crea la
+            //    fila en "perfiles" automáticamente con estos datos,
+            //    incluso si "Confirm email" deja al usuario sin sesión
+            //    activa todavía (por eso NO insertamos desde el navegador).
             const { data, error } = await supabaseClient.auth.signUp({
                 email,
-                password: clave
+                password: clave,
+                options: {
+                    data: { usuario, permiso, turno, area }
+                }
             });
 
             if (error) {
                 errorEl.innerText = error.message.includes('already registered')
                     ? 'Ese correo ya está registrado.'
                     : `No se pudo registrar: ${error.message}`;
-                errorEl.classList.remove('hidden');
-                if (boton) { boton.disabled = false; boton.innerText = 'Registrar Operador'; }
-                return;
-            }
-
-            // 2) Crea su fila de perfil (rol/permiso, pendiente de aprobación) en "perfiles"
-            const { error: errorPerfil } = await supabaseClient.from('perfiles').insert({
-                id: data.user.id,
-                usuario,
-                email,
-                rol: 'operador',
-                permiso, // 'lectura' | 'escritura'
-                turno,
-                area,
-                aprobado: false
-            });
-
-            if (errorPerfil) {
-                errorEl.innerText = `Cuenta creada, pero falló el perfil: ${errorPerfil.message}`;
                 errorEl.classList.remove('hidden');
                 if (boton) { boton.disabled = false; boton.innerText = 'Registrar Operador'; }
                 return;

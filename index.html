@@ -1814,82 +1814,76 @@
         // ---------------------------------------------------------------
         // Residentes en Turno (Horario Inhábil)
         // Fuente: Google Sheet "NOVEDADES ADULTO Y PEDIATRÍA 2026"
-        //   - Pestaña "NOVEDADES ADULTO"     · A12:L19 (Residentes Turno Adulto)
+        //   - Pestaña "NOVEDADES ADULTO"     · A13:L19 (Residentes Turno Adulto)
         //   - Pestaña "NOVEDADES PEDIATRICAS" · A11:L19 (Residentes Turno Pediatría & Materno)
-        // La 1ª fila de cada rango se usa como encabezado (columnas no
-        // vienen fijas: se toman literalmente desde la hoja).
+        // Solo se muestra: Unidad, Médico(s) Residente(s) y el nombre del
+        // EU/Matrona Jefe de Turno -- sin replicar toda la grilla de camas.
         // ---------------------------------------------------------------
         const RESIDENTES_ADULTO_RANGO = 'A13:L19';
         const RESIDENTES_PEDIATRIA_RANGO = 'A11:L19';
 
-        // Convierte una fila en celdas <td>, fusionando (colspan) cada valor
-        // con las celdas vacías que le siguen inmediatamente -- así se imita
-        // el efecto visual de "celdas combinadas" de Google Sheets sin
-        // necesitar conocer de antemano qué columnas pertenecen a cada
-        // sección (UCI-A, UTI-A, SUI, UCIP, etc.).
-        function celdasFusionadas(fila, tag, claseBase) {
-            let html = '';
+        // Detecta el inicio de cada "unidad" en la fila de secciones: un
+        // valor no vacío, seguido de columnas vacías hasta el próximo valor
+        // (así se sabe cuántas columnas ocupa cada unidad, sin fijarlas a mano).
+        function detectarSecciones(filaSecciones) {
+            const secciones = [];
             let i = 0;
-            while (i < fila.length) {
-                const valor = fila[i];
-                if (valor === '' || valor === undefined || valor === null) {
-                    html += `<${tag} class="${claseBase}"></${tag}>`;
-                    i++;
-                    continue;
-                }
+            while (i < filaSecciones.length) {
+                const valor = String(filaSecciones[i] ?? '').trim();
+                if (valor === '') { i++; continue; }
                 let span = 1;
-                while (i + span < fila.length && (fila[i + span] === '' || fila[i + span] == null)) span++;
-                html += `<${tag} ${span > 1 ? `colspan="${span}"` : ''} class="${claseBase}">${valor}</${tag}>`;
+                while (i + span < filaSecciones.length && String(filaSecciones[i + span] ?? '').trim() === '') span++;
+                secciones.push({ col: i, span, nombre: valor });
                 i += span;
             }
-            return html;
+            return secciones;
         }
 
-        function pintarTablaGenerica(theadId, tbodyId, filas) {
+        function pintarResidentesSimplificado(theadId, tbodyId, filas) {
             const thead = document.getElementById(theadId);
             const tbody = document.getElementById(tbodyId);
-            const numCols = 12; // A a L
 
-            if (!filas || filas.length === 0) {
+            if (!filas || filas.length < 2) {
                 thead.innerHTML = '';
-                tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>`;
+                tbody.innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>';
                 return;
             }
 
-            // IMPORTANTE: NO se descartan filas vacías aquí. La fila 0 del
-            // rango siempre es la de secciones y la fila 1 siempre la de
-            // médicos, tal como vienen en la hoja -- si se filtraran filas
-            // vacías antes de esto, una fila separadora vacía en medio del
-            // rango correría todo hacia arriba y desalinearía la tabla.
             const filaSecciones = filas[0] || [];
             const filaMedicos = filas[1] || [];
-            const filasDatos = filas.slice(2).filter(f => f.some(v => String(v ?? '').trim() !== ''));
+            const filaJefe = filas[filas.length - 1] || []; // última fila del rango: EU/Matrona Jefe de Turno
 
-            // Fila 1: encabezados de sección (SUI, UCIP, UTIP-PEDIATRIA, etc.)
-            thead.innerHTML = '<tr>' + celdasFusionadas(
-                filaSecciones,
-                'th',
-                'px-2 py-1.5 text-center font-bold uppercase bg-rose-200 text-rose-900 border border-rose-300 whitespace-nowrap'
-            ) + '</tr>';
+            const secciones = detectarSecciones(filaSecciones);
+            if (secciones.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>';
+                return;
+            }
 
-            let cuerpo = '';
+            thead.innerHTML = `<tr>
+                <th class="px-3 py-2 text-left font-semibold bg-slate-100 text-slate-600">Unidad</th>
+                <th class="px-3 py-2 text-left font-semibold bg-slate-100 text-slate-600">Médico(s) Residente(s)</th>
+                <th class="px-3 py-2 text-left font-semibold bg-slate-100 text-slate-600">EU / Matrona Jefe de Turno</th>
+            </tr>`;
 
-            // Fila 2: nombres de médicos por sección
-            cuerpo += '<tr>' + celdasFusionadas(
-                filaMedicos,
-                'td',
-                'px-2 py-1.5 text-center font-semibold italic text-blue-700 bg-blue-50/60 border border-slate-200 whitespace-nowrap'
-            ) + '</tr>';
-
-            // Resto de filas: datos (camas libres, jefe de turno, etc.)
-            filasDatos.forEach((f, idx) => {
+            tbody.innerHTML = secciones.map((s, idx) => {
+                let medico = '';
+                for (let c = s.col; c < s.col + s.span; c++) {
+                    const v = String(filaMedicos[c] ?? '').trim();
+                    if (v) { medico = v; break; }
+                }
+                let jefe = '';
+                for (let c = s.col; c < s.col + s.span; c++) {
+                    const v = String(filaJefe[c] ?? '').trim();
+                    if (v && !/jefe|turno/i.test(v)) { jefe = v; break; }
+                }
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-                cuerpo += `<tr class="${bg}">` + celdasFusionadas(
-                    f, 'td', 'px-2 py-1 text-slate-700 border border-slate-100 whitespace-nowrap'
-                ) + '</tr>';
-            });
-
-            tbody.innerHTML = cuerpo;
+                return `<tr class="${bg}">
+                    <td class="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">${s.nombre}</td>
+                    <td class="px-3 py-2 text-blue-700 italic font-medium">${medico || '<span class="text-slate-300 not-italic">—</span>'}</td>
+                    <td class="px-3 py-2 text-slate-700 font-medium">${jefe || '<span class="text-slate-300 font-normal">—</span>'}</td>
+                </tr>`;
+            }).join('');
         }
 
         async function cargarResidentesTurno() {
@@ -1897,7 +1891,7 @@
             document.getElementById(tbodyA).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
                 const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, RESIDENTES_ADULTO_RANGO);
-                pintarTablaGenerica(theadA, tbodyA, filas);
+                pintarResidentesSimplificado(theadA, tbodyA, filas);
             } catch (err) {
                 console.warn('No se pudo leer Residentes en Turno (Adulto):', err);
                 document.getElementById(tbodyA).innerHTML = '<tr><td class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
@@ -1907,7 +1901,7 @@
             document.getElementById(tbodyP).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
                 const filasP = await leerRangoGviz(SOLICITUDES_PEDIATRIA_SHEET, RESIDENTES_PEDIATRIA_RANGO);
-                pintarTablaGenerica(theadP, tbodyP, filasP);
+                pintarResidentesSimplificado(theadP, tbodyP, filasP);
             } catch (err) {
                 console.warn('No se pudo leer Residentes en Turno (Pediatría/Materno):', err);
                 document.getElementById(tbodyP).innerHTML = '<tr><td class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';

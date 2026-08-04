@@ -2362,12 +2362,20 @@
         // Descarga una hoja completa (sin rango fijo) vía la API pública gviz (JSON)
         async function leerHojaCompletaGviz(spreadsheetId, sheetName) {
             const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`
-                + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+                + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&headers=1`;
             const res = await fetch(url);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
-            if (!json.table || !json.table.rows) return [];
-            return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
+            if (!json.table) return { encabezados: [], filas: [] };
+
+            // Google detecta automáticamente la fila de encabezado (fila 1)
+            // y la separa en table.cols[].label -- por eso NO hay que tomar
+            // la primera fila de table.rows como encabezado (esa ya es el
+            // primer dato real; tomarla como encabezado pierde el título
+            // verdadero de las columnas y corre todos los datos una fila).
+            const encabezados = (json.table.cols || []).map(c => c.label || '');
+            const filas = (json.table.rows || []).map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
+            return { encabezados, filas };
         }
 
         async function cargarSolicitudesCDT() {
@@ -2382,21 +2390,20 @@
 
             tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
-                const filas = await leerHojaCompletaGviz(CDT_SPREADSHEET_ID, CDT_SHEET_NAME);
+                const { encabezados, filas } = await leerHojaCompletaGviz(CDT_SPREADSHEET_ID, CDT_SHEET_NAME);
                 if (filas.length === 0) {
                     thead.innerHTML = '';
                     tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos.</td></tr>';
                     return;
                 }
 
-                const [encabezado, ...datos] = filas;
-                thead.innerHTML = '<tr>' + encabezado.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
+                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
 
-                const datosConContenido = datos.filter(f => f.some(v => String(v ?? '').trim() !== ''));
+                const datosConContenido = filas.filter(f => f.some(v => String(v ?? '').trim() !== ''));
                 const ultimos30 = datosConContenido.slice(-30).reverse(); // más recientes primero
 
                 if (ultimos30.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${encabezado.length}" class="p-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${encabezados.length}" class="p-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
                     return;
                 }
 

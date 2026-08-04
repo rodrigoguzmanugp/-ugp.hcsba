@@ -704,9 +704,9 @@
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs">
-                        <thead class="bg-slate-50 text-slate-600" id="cabecera-residentes-adulto"></thead>
-                        <tbody id="tabla-residentes-adulto" class="divide-y divide-slate-100">
+                    <table class="w-full text-xs border-collapse">
+                        <thead id="cabecera-residentes-adulto"></thead>
+                        <tbody id="tabla-residentes-adulto">
                             <tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
@@ -721,9 +721,9 @@
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs">
-                        <thead class="bg-slate-50 text-slate-600" id="cabecera-residentes-pediatria"></thead>
-                        <tbody id="tabla-residentes-pediatria" class="divide-y divide-slate-100">
+                    <table class="w-full text-xs border-collapse">
+                        <thead id="cabecera-residentes-pediatria"></thead>
+                        <tbody id="tabla-residentes-pediatria">
                             <tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
@@ -1811,32 +1811,75 @@
         // La 1ª fila de cada rango se usa como encabezado (columnas no
         // vienen fijas: se toman literalmente desde la hoja).
         // ---------------------------------------------------------------
-        const RESIDENTES_ADULTO_RANGO = 'A12:L19';
+        const RESIDENTES_ADULTO_RANGO = 'A13:L19';
         const RESIDENTES_PEDIATRIA_RANGO = 'A11:L19';
+
+        // Convierte una fila en celdas <td>, fusionando (colspan) cada valor
+        // con las celdas vacías que le siguen inmediatamente -- así se imita
+        // el efecto visual de "celdas combinadas" de Google Sheets sin
+        // necesitar conocer de antemano qué columnas pertenecen a cada
+        // sección (UCI-A, UTI-A, SUI, UCIP, etc.).
+        function celdasFusionadas(fila, tag, claseBase) {
+            let html = '';
+            let i = 0;
+            while (i < fila.length) {
+                const valor = fila[i];
+                if (valor === '' || valor === undefined || valor === null) {
+                    html += `<${tag} class="${claseBase}"></${tag}>`;
+                    i++;
+                    continue;
+                }
+                let span = 1;
+                while (i + span < fila.length && (fila[i + span] === '' || fila[i + span] == null)) span++;
+                html += `<${tag} ${span > 1 ? `colspan="${span}"` : ''} class="${claseBase}">${valor}</${tag}>`;
+                i += span;
+            }
+            return html;
+        }
 
         function pintarTablaGenerica(theadId, tbodyId, filas) {
             const thead = document.getElementById(theadId);
             const tbody = document.getElementById(tbodyId);
             const numCols = 12; // A a L
 
-            if (!filas || filas.length === 0) {
+            // Se descartan filas totalmente vacías al final del rango
+            const filasUtiles = (filas || []).filter(f => f.some(v => String(v ?? '').trim() !== ''));
+
+            if (filasUtiles.length === 0) {
                 thead.innerHTML = '';
                 tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>`;
                 return;
             }
 
-            const [encabezado, ...datos] = filas;
-            thead.innerHTML = '<tr>' + encabezado.map(h => `<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${h || ''}</th>`).join('') + '</tr>';
+            const [filaSecciones, filaMedicos, ...filasDatos] = filasUtiles;
 
-            const filasConDatos = datos.filter(f => f.some(v => String(v ?? '').trim() !== ''));
-            if (filasConDatos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin residentes registrados.</td></tr>`;
-                return;
+            // Fila 1: encabezados de sección (SUI, UCIP, UTIP-PEDIATRIA, etc.)
+            thead.innerHTML = '<tr>' + celdasFusionadas(
+                filaSecciones,
+                'th',
+                'px-2 py-1.5 text-center font-bold uppercase bg-rose-200 text-rose-900 border border-rose-300 whitespace-nowrap'
+            ) + '</tr>';
+
+            let cuerpo = '';
+
+            // Fila 2: nombres de médicos por sección (si existe)
+            if (filaMedicos) {
+                cuerpo += '<tr>' + celdasFusionadas(
+                    filaMedicos,
+                    'td',
+                    'px-2 py-1.5 text-center font-semibold italic text-blue-700 bg-blue-50/60 border border-slate-200 whitespace-nowrap'
+                ) + '</tr>';
             }
 
-            tbody.innerHTML = filasConDatos.map(f => '<tr class="hover:bg-slate-50">'
-                + f.map(v => `<td class="px-3 py-2 text-slate-600 whitespace-nowrap">${v ?? ''}</td>`).join('')
-                + '</tr>').join('');
+            // Resto de filas: datos (camas libres, jefe de turno, etc.)
+            filasDatos.forEach((f, idx) => {
+                const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+                cuerpo += `<tr class="${bg}">` + celdasFusionadas(
+                    f, 'td', 'px-2 py-1 text-slate-700 border border-slate-100 whitespace-nowrap'
+                ) + '</tr>';
+            });
+
+            tbody.innerHTML = cuerpo;
         }
 
         async function cargarResidentesTurno() {

@@ -537,6 +537,57 @@
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-purple-500 mr-1.5"></span> En Aseo / Pre-Alta</span>
             </div>
 
+            <!-- Solicitudes de Cama de Salida / Respaldo (datos en vivo desde Google Sheet) -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-emerald-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-emerald-900" id="titulo-solicitudes-adulto">SOLICITUDES DE CAMA DE SALIDA / RESPALDO — Adulto</h3>
+                    <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                                <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                                <th class="px-3 py-2 text-left font-semibold">Diagnóstico</th>
+                                <th class="px-3 py-2 text-left font-semibold">Equipo</th>
+                                <th class="px-3 py-2 text-left font-semibold">Cirugía</th>
+                                <th class="px-3 py-2 text-left font-semibold">Tipo de Cama / Obs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-solicitudes-adulto" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-teal-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-teal-900">SOLICITUDES DE CAMA DE SALIDA — Pediatría</h3>
+                    <span class="text-[10px] text-teal-700">Pendiente de configurar rango/pestaña</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                                <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                                <th class="px-3 py-2 text-left font-semibold">Diagnóstico</th>
+                                <th class="px-3 py-2 text-left font-semibold">Equipo</th>
+                                <th class="px-3 py-2 text-left font-semibold">Cirugía</th>
+                                <th class="px-3 py-2 text-left font-semibold">Tipo de Cama / Obs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-solicitudes-pediatria" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Aún no configurado — dime la pestaña y el rango.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Interactive Visual Grid Container -->
             <div id="visual-bed-plan" class="space-y-6">
                 <!-- Dynamically Rendered by JS -->
@@ -1611,6 +1662,62 @@
 
         // Abre la hoja "PABELLON/TRASLADOS" (4ta pestaña) del archivo
         // "NOVEDADES ADULTO Y PEDIATRÍA 2026" en formato PDF listo para imprimir/descargar.
+        // ---------------------------------------------------------------
+        // Tabla "SOLICITUDES DE CAMA DE SALIDA / RESPALDO"
+        // Fuente: Google Sheet "NOVEDADES ADULTO Y PEDIATRÍA 2026"
+        //   - Pestaña Adulto: encabezado en fila 42 (A42:F42), datos desde A43
+        //   - Pestaña Pediatría: PENDIENTE de configurar (rango/nombre de pestaña)
+        // ---------------------------------------------------------------
+        const SOLICITUDES_ADULTO_SHEET = 'ADULTO'; // TODO: confirmar nombre exacto de la pestaña
+        const SOLICITUDES_ADULTO_RANGO = 'A43:F100';
+
+        // Descarga un rango rectangular de una pestaña vía la API pública gviz (JSON)
+        async function leerRangoGviz(sheetName, rango) {
+            const url = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/gviz/tq`
+                + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${rango}`;
+            const res = await fetch(url);
+            const text = await res.text();
+            const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+            if (!json.table || !json.table.rows) return [];
+            return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
+        }
+
+        function pintarTablaSolicitudes(tbodyId, filas) {
+            const tbody = document.getElementById(tbodyId);
+            // Se queda solo con filas que tengan al menos el nombre (columna B / índice 1) escrito
+            const filasConDatos = filas.filter(f => f[1] && String(f[1]).trim() !== '');
+
+            if (filasConDatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filasConDatos.map(f => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-3 py-2 whitespace-nowrap text-slate-500">${f[0] ?? ''}</td>
+                    <td class="px-3 py-2 font-medium text-slate-800">${f[1] ?? ''}</td>
+                    <td class="px-3 py-2 text-slate-600">${f[2] ?? ''}</td>
+                    <td class="px-3 py-2 text-slate-600">${f[3] ?? ''}</td>
+                    <td class="px-3 py-2 text-slate-600">${f[4] ?? ''}</td>
+                    <td class="px-3 py-2"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold">${f[5] ?? ''}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        async function cargarSolicitudesSalida() {
+            const tbody = document.getElementById('tabla-solicitudes-adulto');
+            tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, SOLICITUDES_ADULTO_RANGO);
+                pintarTablaSolicitudes('tabla-solicitudes-adulto', filas);
+            } catch (err) {
+                console.warn('No se pudo leer Solicitudes de Cama de Salida (Adulto):', err);
+                tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            }
+
+            // Pediatría: pendiente de configurar (ver constante más arriba)
+        }
+
         function imprimirSolicitudPabellon() {
             if (bloquearSiInvitado()) return;
             const printUrl = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/export`
@@ -1765,7 +1872,7 @@
             }
 
             // Trigger specific module renders
-            if (modId === 'novedades') renderBedPlan();
+            if (modId === 'novedades') { renderBedPlan(); cargarSolicitudesSalida(); }
             if (modId === 'inhabil') renderInhabilTable();
             if (modId === 'cdt') renderCdtTable();
             if (modId === 'hec-huap') renderHecHuapList();

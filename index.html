@@ -567,7 +567,9 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-teal-100 px-4 py-2 flex items-center justify-between">
                     <h3 class="font-bold text-sm text-teal-900">SOLICITUDES DE CAMA DE SALIDA — Pediatría</h3>
-                    <span class="text-[10px] text-teal-700">Pendiente de configurar rango/pestaña</span>
+                    <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-teal-700 hover:text-teal-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs">
@@ -575,14 +577,15 @@
                             <tr>
                                 <th class="px-3 py-2 text-left font-semibold">Fecha</th>
                                 <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                                <th class="px-3 py-2 text-left font-semibold">Edad</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diagnóstico</th>
+                                <th class="px-3 py-2 text-left font-semibold">Procedimiento</th>
                                 <th class="px-3 py-2 text-left font-semibold">Equipo</th>
-                                <th class="px-3 py-2 text-left font-semibold">Cirugía</th>
-                                <th class="px-3 py-2 text-left font-semibold">Tipo de Cama / Obs</th>
+                                <th class="px-3 py-2 text-left font-semibold">Observaciones</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-solicitudes-pediatria" class="divide-y divide-slate-100">
-                            <tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Aún no configurado — dime la pestaña y el rango.</td></tr>
+                            <tr><td colspan="7" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1668,8 +1671,11 @@
         //   - Pestaña Adulto: encabezado en fila 42 (A42:F42), datos desde A43
         //   - Pestaña Pediatría: PENDIENTE de configurar (rango/nombre de pestaña)
         // ---------------------------------------------------------------
-        const SOLICITUDES_ADULTO_SHEET = 'ADULTO'; // TODO: confirmar nombre exacto de la pestaña
+        const SOLICITUDES_ADULTO_SHEET = 'NOVEDADES ADULTO';
         const SOLICITUDES_ADULTO_RANGO = 'A43:F100';
+
+        const SOLICITUDES_PEDIATRIA_SHEET = 'NOVEDADES PEDIATRICAS';
+        const SOLICITUDES_PEDIATRIA_RANGO = 'A52:G100'; // encabezado en fila 51, datos desde 52
 
         // Descarga un rango rectangular de una pestaña vía la API pública gviz (JSON)
         async function leerRangoGviz(sheetName, rango) {
@@ -1682,40 +1688,64 @@
             return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
         }
 
-        function pintarTablaSolicitudes(tbodyId, filas) {
+        function pintarTablaSolicitudes(tbodyId, filas, columnas) {
             const tbody = document.getElementById(tbodyId);
             // Se queda solo con filas que tengan al menos el nombre (columna B / índice 1) escrito
             const filasConDatos = filas.filter(f => f[1] && String(f[1]).trim() !== '');
 
             if (filasConDatos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${columnas}" class="px-3 py-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = filasConDatos.map(f => `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-3 py-2 whitespace-nowrap text-slate-500">${f[0] ?? ''}</td>
-                    <td class="px-3 py-2 font-medium text-slate-800">${f[1] ?? ''}</td>
-                    <td class="px-3 py-2 text-slate-600">${f[2] ?? ''}</td>
-                    <td class="px-3 py-2 text-slate-600">${f[3] ?? ''}</td>
-                    <td class="px-3 py-2 text-slate-600">${f[4] ?? ''}</td>
-                    <td class="px-3 py-2"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold">${f[5] ?? ''}</span></td>
-                </tr>
-            `).join('');
+            if (columnas === 7) {
+                // Pediatría: Fecha, Nombre, Edad, Diagnóstico, Procedimiento, Equipo, Observaciones
+                tbody.innerHTML = filasConDatos.map(f => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-2 whitespace-nowrap text-slate-500">${f[0] ?? ''}</td>
+                        <td class="px-3 py-2 font-medium text-slate-800">${f[1] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[2] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[3] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[4] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[5] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-500">${f[6] ?? ''}</td>
+                    </tr>
+                `).join('');
+            } else {
+                // Adulto: Fecha, Nombre, Diagnóstico, Equipo, Cirugía, Tipo de Cama
+                tbody.innerHTML = filasConDatos.map(f => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-2 whitespace-nowrap text-slate-500">${f[0] ?? ''}</td>
+                        <td class="px-3 py-2 font-medium text-slate-800">${f[1] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[2] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[3] ?? ''}</td>
+                        <td class="px-3 py-2 text-slate-600">${f[4] ?? ''}</td>
+                        <td class="px-3 py-2"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold">${f[5] ?? ''}</span></td>
+                    </tr>
+                `).join('');
+            }
         }
 
         async function cargarSolicitudesSalida() {
-            const tbody = document.getElementById('tabla-solicitudes-adulto');
-            tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
+            const tbodyAdulto = document.getElementById('tabla-solicitudes-adulto');
+            tbodyAdulto.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
                 const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, SOLICITUDES_ADULTO_RANGO);
-                pintarTablaSolicitudes('tabla-solicitudes-adulto', filas);
+                pintarTablaSolicitudes('tabla-solicitudes-adulto', filas, 6);
             } catch (err) {
                 console.warn('No se pudo leer Solicitudes de Cama de Salida (Adulto):', err);
-                tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+                tbodyAdulto.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
             }
 
-            // Pediatría: pendiente de configurar (ver constante más arriba)
+            const tbodyPedi = document.getElementById('tabla-solicitudes-pediatria');
+            tbodyPedi.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const filasPedi = await leerRangoGviz(SOLICITUDES_PEDIATRIA_SHEET, SOLICITUDES_PEDIATRIA_RANGO);
+                pintarTablaSolicitudes('tabla-solicitudes-pediatria', filasPedi, 7);
+            } catch (err) {
+                console.warn('No se pudo leer Solicitudes de Cama de Salida (Pediatría):', err);
+                tbodyPedi.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            }
         }
 
         function imprimirSolicitudPabellon() {
@@ -1774,26 +1804,26 @@
         // Data Structures & Initial Mock Data (Adult Enero 2026 & Pediatría 2025 Layout)
         const bedsData = [
             // UPC Adulto
-            { id: 'UCI-01', sector: 'ADULTO_UPC', name: 'UCI Cama 01', status: 'OCUPADA', patient: 'Juan Pérez Soto', rut: '11.234.567-8', age: '62 años', dx: 'Shock Séptico Foco Abdominal', pabellon: false },
-            { id: 'UCI-02', sector: 'ADULTO_UPC', name: 'UCI Cama 02', status: 'SALIDA_UPC', patient: 'María González L.', rut: '14.890.123-K', age: '54 años', dx: 'Post-Op Neurocirugía hematoma', pabellon: true },
+            { id: 'UCI-01', sector: 'ADULTO_UPC', name: 'UCI Cama 01', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'UCI-02', sector: 'ADULTO_UPC', name: 'UCI Cama 02', status: 'SALIDA_UPC', patient: '', rut: '', age: '', dx: '', pabellon: true },
             { id: 'UCI-03', sector: 'ADULTO_UPC', name: 'UCI Cama 03', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
-            { id: 'UTI-01', sector: 'ADULTO_UPC', name: 'UTI Cama 01', status: 'OCUPADA', patient: 'Carlos Rojas M.', rut: '9.876.543-2', age: '71 años', dx: 'Insuficiencia Respiratoria Neumonía', pabellon: false },
-            { id: 'UTI-02', sector: 'ADULTO_UPC', name: 'UTI Cama 02', status: 'SALIDA_UPC', patient: 'Elena Torres B.', rut: '16.543.210-4', age: '48 años', dx: 'Aneurisma Aorta Reintervención', pabellon: true },
+            { id: 'UTI-01', sector: 'ADULTO_UPC', name: 'UTI Cama 01', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'UTI-02', sector: 'ADULTO_UPC', name: 'UTI Cama 02', status: 'SALIDA_UPC', patient: '', rut: '', age: '', dx: '', pabellon: true },
             { id: 'UTI-03', sector: 'ADULTO_UPC', name: 'UTI Cama 03', status: 'ASEO', patient: '', rut: '', age: '', dx: '', pabellon: false },
 
             // Cuidados Medios Adultos 2026
-            { id: 'MED-101', sector: 'ADULTO_MED', name: 'Sala 1 - Cama A', status: 'OCUPADA', patient: 'Pedro Castillo F.', rut: '8.111.222-3', age: '78 años', dx: 'ACV Isquémico evolución', pabellon: false },
+            { id: 'MED-101', sector: 'ADULTO_MED', name: 'Sala 1 - Cama A', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
             { id: 'MED-102', sector: 'ADULTO_MED', name: 'Sala 1 - Cama B', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
-            { id: 'MED-103', sector: 'ADULTO_MED', name: 'Sala 2 - Cama A', status: 'BLOQUEADA', patient: '', rut: '', age: '', dx: 'Falla red de oxígeno', pabellon: false },
-            { id: 'MED-104', sector: 'ADULTO_MED', name: 'Sala 2 - Cama B', status: 'OCUPADA', patient: 'Rosa Diaz H.', rut: '13.444.555-6', age: '65 años', dx: 'Descompensación Diabética', pabellon: false },
+            { id: 'MED-103', sector: 'ADULTO_MED', name: 'Sala 2 - Cama A', status: 'BLOQUEADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'MED-104', sector: 'ADULTO_MED', name: 'Sala 2 - Cama B', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
 
             // Pediatría UPC Infantil
-            { id: 'UCIP-01', sector: 'PEDE_UPC', name: 'UCI Pediátrica 01', status: 'OCUPADA', patient: 'L. M. (Lactante)', rut: '25.678.901-2', age: '8 meses', dx: 'Bronquiolitis Neumocócica', pabellon: false },
-            { id: 'UCIP-02', sector: 'PEDE_UPC', name: 'UCI Pediátrica 02', status: 'SALIDA_UPC', patient: 'Matías Silva K.', rut: '24.111.333-5', age: '4 años', dx: 'Post-op Apendicitis Complicada', pabellon: true },
+            { id: 'UCIP-01', sector: 'PEDE_UPC', name: 'UCI Pediátrica 01', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
+            { id: 'UCIP-02', sector: 'PEDE_UPC', name: 'UCI Pediátrica 02', status: 'SALIDA_UPC', patient: '', rut: '', age: '', dx: '', pabellon: true },
             { id: 'UTIP-01', sector: 'PEDE_UPC', name: 'UTI Pediátrica 01', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
 
             // Pediatría Sala General 2025
-            { id: 'PED-201', sector: 'PEDE_SALA', name: 'Pediatría Sala 3 - A', status: 'OCUPADA', patient: 'Sofía Vargas T.', rut: '23.456.789-0', age: '7 años', dx: 'Neumonía Basal Izquierda', pabellon: false },
+            { id: 'PED-201', sector: 'PEDE_SALA', name: 'Pediatría Sala 3 - A', status: 'OCUPADA', patient: '', rut: '', age: '', dx: '', pabellon: false },
             { id: 'PED-202', sector: 'PEDE_SALA', name: 'Pediatría Sala 3 - B', status: 'DISPONIBLE', patient: '', rut: '', age: '', dx: '', pabellon: false },
         ];
 

@@ -503,21 +503,9 @@
                     <h2 class="text-lg font-bold text-slate-900">Planilla General de Camas - Novedades 2026</h2>
                     <p class="text-xs text-slate-500">Inspirado en Planos Oficiales de Pediatría 2025 y Adulto Enero 2026</p>
                 </div>
-                
+
                 <!-- Controls & Filters -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <select id="bed-sector-filter" onchange="renderBedPlan()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-2 focus:ring-brand-500 focus:border-brand-500">
-                        <option value="ALL">Todos los Sectores</option>
-                        <option value="ADULTO_UPC">Adultos: UPC (UCI / UTI)</option>
-                        <option value="ADULTO_MED">Adultos: Cuidados Medios / Básicos</option>
-                        <option value="PEDE_UPC">Pediatría: UPC Infantil</option>
-                        <option value="PEDE_SALA">Pediatría: Salas General 2025</option>
-                    </select>
-
-                    <button onclick="toggleViewMode()" id="toggle-view-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
-                        <i class="fa-solid fa-table-list mr-1"></i> Modo Excel
-                    </button>
-
                     <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-medium shadow-sm">
                         <i class="fa-solid fa-print mr-1"></i> Imprimir Planilla
                     </button>
@@ -537,10 +525,10 @@
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-purple-500 mr-1.5"></span> En Aseo / Pre-Alta</span>
             </div>
 
-            <!-- Solicitudes de Cama de Salida / Respaldo (datos en vivo desde Google Sheet) -->
+            <!-- ============ ADULTO ============ -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-emerald-100 px-4 py-2 flex items-center justify-between">
-                    <h3 class="font-bold text-sm text-emerald-900" id="titulo-solicitudes-adulto">SOLICITUDES DE CAMA DE SALIDA / RESPALDO — Adulto</h3>
+                    <h3 class="font-bold text-sm text-emerald-900">SOLICITUDES DE CAMA DE SALIDA / RESPALDO — Adulto</h3>
                     <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-medium">
                         <i class="fa-solid fa-rotate mr-1"></i>Actualizar
                     </button>
@@ -565,8 +553,35 @@
             </div>
 
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-amber-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-amber-900">FUTUROS PABELLONES — Adulto</h3>
+                    <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-amber-700 hover:text-amber-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                                <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                                <th class="px-3 py-2 text-left font-semibold">Diagnóstico</th>
+                                <th class="px-3 py-2 text-left font-semibold">Equipo</th>
+                                <th class="px-3 py-2 text-left font-semibold">Cirugía</th>
+                                <th class="px-3 py-2 text-left font-semibold">Tipo de Cama / Obs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-futuros-pabellones-adulto" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ PEDIATRÍA ============ -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-teal-100 px-4 py-2 flex items-center justify-between">
-                    <h3 class="font-bold text-sm text-teal-900">SOLICITUDES DE CAMA DE SALIDA — Pediatría</h3>
+                    <h3 class="font-bold text-sm text-teal-900">SALIDAS CAMAS UCIP — Pediatría</h3>
                     <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-teal-700 hover:text-teal-900 font-medium">
                         <i class="fa-solid fa-rotate mr-1"></i>Actualizar
                     </button>
@@ -584,37 +599,35 @@
                                 <th class="px-3 py-2 text-left font-semibold">Observaciones</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla-solicitudes-pediatria" class="divide-y divide-slate-100">
+                        <tbody id="tabla-solicitudes-pediatria-ucip" class="divide-y divide-slate-100">
                             <tr><td colspan="7" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Interactive Visual Grid Container -->
-            <div id="visual-bed-plan" class="space-y-6">
-                <!-- Dynamically Rendered by JS -->
-            </div>
-
-            <!-- Excel-style Table View Container (Hidden by default) -->
-            <div id="excel-bed-plan" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-indigo-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-indigo-900">SALIDAS CAMAS UTIP — Pediatría</h3>
+                    <button onclick="cargarSolicitudesSalida()" class="text-[11px] text-indigo-700 hover:text-indigo-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead class="bg-slate-900 text-white uppercase font-semibold">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600">
                             <tr>
-                                <th class="p-2.5 border border-slate-700">Cama</th>
-                                <th class="p-2.5 border border-slate-700">Sector / Servicio</th>
-                                <th class="p-2.5 border border-slate-700">Estado</th>
-                                <th class="p-2.5 border border-slate-700">Paciente</th>
-                                <th class="p-2.5 border border-slate-700">RUT</th>
-                                <th class="p-2.5 border border-slate-700">Edad</th>
-                                <th class="p-2.5 border border-slate-700">Diagnóstico</th>
-                                <th class="p-2.5 border border-slate-700">Salida Pabellón</th>
-                                <th class="p-2.5 border border-slate-700 text-center">Acciones</th>
+                                <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                                <th class="px-3 py-2 text-left font-semibold">Nombre</th>
+                                <th class="px-3 py-2 text-left font-semibold">Edad</th>
+                                <th class="px-3 py-2 text-left font-semibold">Diagnóstico</th>
+                                <th class="px-3 py-2 text-left font-semibold">Procedimiento</th>
+                                <th class="px-3 py-2 text-left font-semibold">Equipo</th>
+                                <th class="px-3 py-2 text-left font-semibold">Observaciones</th>
                             </tr>
                         </thead>
-                        <tbody id="excel-table-body" class="divide-y divide-slate-200 text-slate-700">
-                            <!-- Populated by JS -->
+                        <tbody id="tabla-solicitudes-pediatria-utip" class="divide-y divide-slate-100">
+                            <tr><td colspan="7" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -641,6 +654,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="openModuleSheet('inhabil')" class="bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
                         <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                    </button>
+                    <button data-restrict-guest="true" onclick="imprimirPlanillaInhabil()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-print mr-2"></i> Imprimir Planilla
                     </button>
                     <button data-requires-write="true" onclick="configureSheetUrl('inhabil', 'Planilla Horario Inhábil')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
                         <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
@@ -674,6 +690,41 @@
                         </thead>
                         <tbody id="inhabil-table-body" class="divide-y divide-slate-100">
                             <!-- JS content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Residentes en Turno (datos en vivo desde "NOVEDADES ADULTO Y PEDIATRÍA 2026") -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-sky-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-sky-900">RESIDENTES EN TURNO — Adulto</h3>
+                    <button onclick="cargarResidentesTurno()" class="text-[11px] text-sky-700 hover:text-sky-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600" id="cabecera-residentes-adulto"></thead>
+                        <tbody id="tabla-residentes-adulto" class="divide-y divide-slate-100">
+                            <tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-pink-100 px-4 py-2 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-pink-900">RESIDENTES EN TURNO — Pediatría &amp; Materno</h3>
+                    <button onclick="cargarResidentesTurno()" class="text-[11px] text-pink-700 hover:text-pink-900 font-medium">
+                        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-slate-50 text-slate-600" id="cabecera-residentes-pediatria"></thead>
+                        <tbody id="tabla-residentes-pediatria" class="divide-y divide-slate-100">
+                            <tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1550,10 +1601,13 @@
         const PABELLON_TRASLADOS_GID = '947824045';
         // ID real de la planilla "INFORME DE TURNO"
         const INFORME_TURNO_SPREADSHEET_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0';
+        // ID real de la planilla "PLANILLA HORARIO INHÁBIL"
+        const INHABIL_SPREADSHEET_ID = '1BbXod2qcSa5ngLLDUtrTJUxaV6UbBGFW';
+        const INHABIL_GID = '0'; // no se indicó gid específico -> primera pestaña
 
         const defaultSheetUrls = {
             novedades: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
-            inhabil: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
+            inhabil: `https://docs.google.com/spreadsheets/d/${INHABIL_SPREADSHEET_ID}/edit`,
             informe: `https://docs.google.com/spreadsheets/d/${INFORME_TURNO_SPREADSHEET_ID}/edit`,
             cdt: `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
             'hec-huap': `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/edit`,
@@ -1672,10 +1726,12 @@
         //   - Pestaña Pediatría: PENDIENTE de configurar (rango/nombre de pestaña)
         // ---------------------------------------------------------------
         const SOLICITUDES_ADULTO_SHEET = 'NOVEDADES ADULTO';
-        const SOLICITUDES_ADULTO_RANGO = 'A43:F100';
+        const SOLICITUDES_ADULTO_RANGO = 'A43:F48';          // Solicitudes de Cama de Salida / Respaldo (máx 6 filas)
+        const FUTUROS_PABELLONES_ADULTO_RANGO = 'A50:F54';   // Futuros Pabellones (máx 5 filas, tras fila de título A49)
 
         const SOLICITUDES_PEDIATRIA_SHEET = 'NOVEDADES PEDIATRICAS';
-        const SOLICITUDES_PEDIATRIA_RANGO = 'A52:G100'; // encabezado en fila 51, datos desde 52
+        const SOLICITUDES_UCIP_RANGO = 'A52:G56';  // Salidas Camas UCIP (máx 5 filas)
+        const SOLICITUDES_UTIP_RANGO = 'A67:G71';  // Salidas Camas UTIP (máx 5 filas, desde fila 67)
 
         // Descarga un rango rectangular de una pestaña vía la API pública gviz (JSON)
         async function leerRangoGviz(sheetName, rango) {
@@ -1727,34 +1783,114 @@
         }
 
         async function cargarSolicitudesSalida() {
-            const tbodyAdulto = document.getElementById('tabla-solicitudes-adulto');
-            tbodyAdulto.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
-            try {
-                const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, SOLICITUDES_ADULTO_RANGO);
-                pintarTablaSolicitudes('tabla-solicitudes-adulto', filas, 6);
-            } catch (err) {
-                console.warn('No se pudo leer Solicitudes de Cama de Salida (Adulto):', err);
-                tbodyAdulto.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            const cargas = [
+                { sheet: SOLICITUDES_ADULTO_SHEET, rango: SOLICITUDES_ADULTO_RANGO, tbodyId: 'tabla-solicitudes-adulto', cols: 6, label: 'Solicitudes de Salida (Adulto)' },
+                { sheet: SOLICITUDES_ADULTO_SHEET, rango: FUTUROS_PABELLONES_ADULTO_RANGO, tbodyId: 'tabla-futuros-pabellones-adulto', cols: 6, label: 'Futuros Pabellones (Adulto)' },
+                { sheet: SOLICITUDES_PEDIATRIA_SHEET, rango: SOLICITUDES_UCIP_RANGO, tbodyId: 'tabla-solicitudes-pediatria-ucip', cols: 7, label: 'Salidas Camas UCIP' },
+                { sheet: SOLICITUDES_PEDIATRIA_SHEET, rango: SOLICITUDES_UTIP_RANGO, tbodyId: 'tabla-solicitudes-pediatria-utip', cols: 7, label: 'Salidas Camas UTIP' }
+            ];
+
+            for (const c of cargas) {
+                const tbody = document.getElementById(c.tbodyId);
+                tbody.innerHTML = `<tr><td colspan="${c.cols}" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>`;
+                try {
+                    const filas = await leerRangoGviz(c.sheet, c.rango);
+                    pintarTablaSolicitudes(c.tbodyId, filas, c.cols);
+                } catch (err) {
+                    console.warn(`No se pudo leer "${c.label}":`, err);
+                    tbody.innerHTML = `<tr><td colspan="${c.cols}" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>`;
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Residentes en Turno (Horario Inhábil)
+        // Fuente: Google Sheet "NOVEDADES ADULTO Y PEDIATRÍA 2026"
+        //   - Pestaña "NOVEDADES ADULTO"     · A12:L19 (Residentes Turno Adulto)
+        //   - Pestaña "NOVEDADES PEDIATRICAS" · A11:L19 (Residentes Turno Pediatría & Materno)
+        // La 1ª fila de cada rango se usa como encabezado (columnas no
+        // vienen fijas: se toman literalmente desde la hoja).
+        // ---------------------------------------------------------------
+        const RESIDENTES_ADULTO_RANGO = 'A12:L19';
+        const RESIDENTES_PEDIATRIA_RANGO = 'A11:L19';
+
+        function pintarTablaGenerica(theadId, tbodyId, filas) {
+            const thead = document.getElementById(theadId);
+            const tbody = document.getElementById(tbodyId);
+            const numCols = 12; // A a L
+
+            if (!filas || filas.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>`;
+                return;
             }
 
-            const tbodyPedi = document.getElementById('tabla-solicitudes-pediatria');
-            tbodyPedi.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
-            try {
-                const filasPedi = await leerRangoGviz(SOLICITUDES_PEDIATRIA_SHEET, SOLICITUDES_PEDIATRIA_RANGO);
-                pintarTablaSolicitudes('tabla-solicitudes-pediatria', filasPedi, 7);
-            } catch (err) {
-                console.warn('No se pudo leer Solicitudes de Cama de Salida (Pediatría):', err);
-                tbodyPedi.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            const [encabezado, ...datos] = filas;
+            thead.innerHTML = '<tr>' + encabezado.map(h => `<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">${h || ''}</th>`).join('') + '</tr>';
+
+            const filasConDatos = datos.filter(f => f.some(v => String(v ?? '').trim() !== ''));
+            if (filasConDatos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin residentes registrados.</td></tr>`;
+                return;
             }
+
+            tbody.innerHTML = filasConDatos.map(f => '<tr class="hover:bg-slate-50">'
+                + f.map(v => `<td class="px-3 py-2 text-slate-600 whitespace-nowrap">${v ?? ''}</td>`).join('')
+                + '</tr>').join('');
+        }
+
+        async function cargarResidentesTurno() {
+            const theadA = 'cabecera-residentes-adulto', tbodyA = 'tabla-residentes-adulto';
+            document.getElementById(tbodyA).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, RESIDENTES_ADULTO_RANGO);
+                pintarTablaGenerica(theadA, tbodyA, filas);
+            } catch (err) {
+                console.warn('No se pudo leer Residentes en Turno (Adulto):', err);
+                document.getElementById(tbodyA).innerHTML = '<tr><td class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            }
+
+            const theadP = 'cabecera-residentes-pediatria', tbodyP = 'tabla-residentes-pediatria';
+            document.getElementById(tbodyP).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const filasP = await leerRangoGviz(SOLICITUDES_PEDIATRIA_SHEET, RESIDENTES_PEDIATRIA_RANGO);
+                pintarTablaGenerica(theadP, tbodyP, filasP);
+            } catch (err) {
+                console.warn('No se pudo leer Residentes en Turno (Pediatría/Materno):', err);
+                document.getElementById(tbodyP).innerHTML = '<tr><td class="px-3 py-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            }
+        }
+
+        // Impresión inmediata de "PLANILLA HORARIO INHÁBIL"
+        // TODO: reemplazar por el ID y gid reales de esa planilla (archivo
+        // distinto a "NOVEDADES..."). Mientras tanto, usa el enlace
+        // configurado en "Configurar Enlace" como alternativa.
+        function imprimirPlanillaInhabil() {
+            if (bloquearSiInvitado()) return;
+            if (!INHABIL_SPREADSHEET_ID) {
+                alert('Falta configurar el ID de "PLANILLA HORARIO INHÁBIL" para la impresión inmediata. Mientras tanto, se abrirá el enlace configurado.');
+                openModuleSheet('inhabil');
+                return;
+            }
+            const printUrl = `https://docs.google.com/spreadsheets/d/${INHABIL_SPREADSHEET_ID}/export`
+                + `?format=pdf&gid=${INHABIL_GID}`
+                + `&portrait=false&size=letter&scale=4`
+                + `&horizontal_alignment=CENTER&vertical_alignment=MIDDLE`
+                + `&top_margin=0.4&bottom_margin=0.4&left_margin=0.4&right_margin=0.4`
+                + `&gridlines=false&printtitle=false&sheetnames=false`
+                + `&pagenumbers=false&fzr=false&attachment=false`;
+            window.open(printUrl, '_blank');
         }
 
         function imprimirSolicitudPabellon() {
             if (bloquearSiInvitado()) return;
             const printUrl = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/export`
                 + `?format=pdf&gid=${PABELLON_TRASLADOS_GID}`
-                + `&portrait=false&size=A4&fitw=true`
+                + `&portrait=true&size=letter&scale=4`
+                + `&horizontal_alignment=CENTER&vertical_alignment=MIDDLE`
+                + `&top_margin=0.4&bottom_margin=0.4&left_margin=0.4&right_margin=0.4`
                 + `&gridlines=false&printtitle=false&sheetnames=false`
-                + `&pagenumbers=false&attachment=false`;
+                + `&pagenumbers=false&fzr=false&attachment=false`;
             window.open(printUrl, '_blank');
         }
 
@@ -1795,9 +1931,9 @@
 
         function navigateToModule(modId) {
             if (bloquearSiInvitado('El modo Invitado (Solo Consulta) por ahora solo puede ver el Inicio / Dashboard.')) return;
-            // Open shared Google Sheet in a new tab when clicking module
-            openModuleSheet(modId);
-            // Switch current application view to selected module
+            // Solo navega dentro de la página. Abrir el Google Sheet es una
+            // acción explícita aparte (botones "Abrir Google Sheet" en
+            // Inicio/Dashboard y en el encabezado principal).
             switchModule(modId);
         }
 
@@ -1902,8 +2038,8 @@
             }
 
             // Trigger specific module renders
-            if (modId === 'novedades') { renderBedPlan(); cargarSolicitudesSalida(); }
-            if (modId === 'inhabil') renderInhabilTable();
+            if (modId === 'novedades') { cargarSolicitudesSalida(); }
+            if (modId === 'inhabil') { renderInhabilTable(); cargarResidentesTurno(); }
             if (modId === 'cdt') renderCdtTable();
             if (modId === 'hec-huap') renderHecHuapList();
             if (modId === 'macrorred') renderMacrorredTable();
@@ -2078,8 +2214,7 @@
                 bed.age = document.getElementById('edit-bed-age').value;
                 bed.dx = document.getElementById('edit-bed-dx').value;
                 bed.pabellon = (bed.status === 'SALIDA_UPC');
-                
-                renderBedPlan();
+
                 closeEditBedModal();
             }
         }
@@ -2323,7 +2458,6 @@
             if (!supabaseClient) {
                 document.getElementById('supabase-config-warning').classList.remove('hidden');
             }
-            renderBedPlan();
             cargarKpisCamasCriticas();
             await restaurarSesion(); // si hay sesión activa de Supabase, salta el login
         };

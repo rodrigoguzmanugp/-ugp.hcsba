@@ -1730,7 +1730,7 @@
         const FUTUROS_PABELLONES_ADULTO_RANGO = 'A50:F54';   // Futuros Pabellones (máx 5 filas, tras fila de título A49)
 
         const SOLICITUDES_PEDIATRIA_SHEET = 'NOVEDADES PEDIATRICAS';
-        const SOLICITUDES_UCIP_RANGO = 'A52:G56';  // Salidas Camas UCIP (máx 5 filas)
+        const SOLICITUDES_UCIP_RANGO = 'A53:G57';  // Salidas Camas UCIP (máx 5 filas de datos, tras encabezado en fila 52)
         const SOLICITUDES_UTIP_RANGO = 'A67:G71';  // Salidas Camas UTIP (máx 5 filas, desde fila 67)
 
         // Descarga un rango rectangular de una pestaña vía la API pública gviz (JSON)
@@ -1744,10 +1744,18 @@
             return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
         }
 
+        // Palabras típicas de encabezado: si una fila las trae en la 1ª o 2ª
+        // columna, es casi seguro el encabezado de la planilla, no un dato.
+        const ETIQUETAS_ENCABEZADO = ['fecha', 'nombre', 'diagnostico', 'diagnóstico', 'edad', 'equipo', 'cirugia', 'cirugía', 'procedimiento', 'observaciones', 'tipo de cama'];
+        function pareceEncabezado(fila) {
+            return fila.slice(0, 2).some(v => ETIQUETAS_ENCABEZADO.includes(String(v ?? '').trim().toLowerCase()));
+        }
+
         function pintarTablaSolicitudes(tbodyId, filas, columnas) {
             const tbody = document.getElementById(tbodyId);
-            // Se queda solo con filas que tengan al menos el nombre (columna B / índice 1) escrito
-            const filasConDatos = filas.filter(f => f[1] && String(f[1]).trim() !== '');
+            // Se queda solo con filas que tengan al menos el nombre (columna B / índice 1) escrito,
+            // y descarta cualquier fila que en realidad sea el encabezado de la planilla.
+            const filasConDatos = filas.filter(f => f[1] && String(f[1]).trim() !== '' && !pareceEncabezado(f));
 
             if (filasConDatos.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${columnas}" class="px-3 py-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
@@ -1842,16 +1850,20 @@
             const tbody = document.getElementById(tbodyId);
             const numCols = 12; // A a L
 
-            // Se descartan filas totalmente vacías al final del rango
-            const filasUtiles = (filas || []).filter(f => f.some(v => String(v ?? '').trim() !== ''));
-
-            if (filasUtiles.length === 0) {
+            if (!filas || filas.length === 0) {
                 thead.innerHTML = '';
                 tbody.innerHTML = `<tr><td colspan="${numCols}" class="px-3 py-4 text-center text-slate-400">Sin datos.</td></tr>`;
                 return;
             }
 
-            const [filaSecciones, filaMedicos, ...filasDatos] = filasUtiles;
+            // IMPORTANTE: NO se descartan filas vacías aquí. La fila 0 del
+            // rango siempre es la de secciones y la fila 1 siempre la de
+            // médicos, tal como vienen en la hoja -- si se filtraran filas
+            // vacías antes de esto, una fila separadora vacía en medio del
+            // rango correría todo hacia arriba y desalinearía la tabla.
+            const filaSecciones = filas[0] || [];
+            const filaMedicos = filas[1] || [];
+            const filasDatos = filas.slice(2).filter(f => f.some(v => String(v ?? '').trim() !== ''));
 
             // Fila 1: encabezados de sección (SUI, UCIP, UTIP-PEDIATRIA, etc.)
             thead.innerHTML = '<tr>' + celdasFusionadas(
@@ -1862,14 +1874,12 @@
 
             let cuerpo = '';
 
-            // Fila 2: nombres de médicos por sección (si existe)
-            if (filaMedicos) {
-                cuerpo += '<tr>' + celdasFusionadas(
-                    filaMedicos,
-                    'td',
-                    'px-2 py-1.5 text-center font-semibold italic text-blue-700 bg-blue-50/60 border border-slate-200 whitespace-nowrap'
-                ) + '</tr>';
-            }
+            // Fila 2: nombres de médicos por sección
+            cuerpo += '<tr>' + celdasFusionadas(
+                filaMedicos,
+                'td',
+                'px-2 py-1.5 text-center font-semibold italic text-blue-700 bg-blue-50/60 border border-slate-200 whitespace-nowrap'
+            ) + '</tr>';
 
             // Resto de filas: datos (camas libres, jefe de turno, etc.)
             filasDatos.forEach((f, idx) => {
@@ -2007,10 +2017,7 @@
         ];
 
         // Inhabiles Mock
-        const inhabilLogs = [
-            { date: '02/08/2026 23:15', patient: 'Hernán Bravo G.', origin: 'Urgencia Adulto', bed: 'UTI Cama 01', manager: 'Dra. M. Soto', obs: 'Ingreso nocturno directo VMI', status: 'COMPLETADO' },
-            { date: '03/08/2026 04:30', patient: 'Camila Muñoz F.', origin: 'Maternidad', bed: 'MED-102', manager: 'EU R. Tapia', obs: 'Puerperio patológico traslado', status: 'COMPLETADO' }
-        ];
+        const inhabilLogs = [];
 
         // CDT Requests Mock
         const cdtRequests = [
@@ -2321,6 +2328,10 @@
         // Module 3: Horario Inhabil Render
         function renderInhabilTable() {
             const tbody = document.getElementById('inhabil-table-body');
+            if (inhabilLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros aún. Usa "Nuevo Registro Inhábil" para agregar uno.</td></tr>';
+                return;
+            }
             tbody.innerHTML = inhabilLogs.map(log => `
                 <tr class="hover:bg-slate-50">
                     <td class="p-3 font-semibold text-slate-800">${log.date}</td>

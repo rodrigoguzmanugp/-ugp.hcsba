@@ -858,29 +858,57 @@
                 <!-- Resumen de Ocupación por Área -->
                 <div>
                     <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">1. Resumen Ocupacional</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <p class="font-semibold text-slate-700">UPC Adulto (UCI / UTI)</p>
-                            <div class="mt-2 space-y-1">
-                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">28</span></div>
-                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">26</span></div>
-                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">2</span></div>
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="p-1.5 bg-blue-50 text-blue-600 rounded-md"><i class="fa-solid fa-heart-pulse"></i></span>
+                                <p class="font-bold text-slate-700 uppercase text-[11px]">Camas Adulto UCI</p>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold" id="informe-uci-adulto-dotacion">—</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600" id="informe-uci-adulto-ocupadas">—</span></div>
+                                <div class="flex justify-between"><span>Reservadas:</span> <span class="font-bold text-amber-600" id="informe-uci-adulto-reservadas">—</span></div>
+                                <div class="flex justify-between"><span>Bloqueadas:</span> <span class="font-bold text-rose-600" id="informe-uci-adulto-bloqueadas">—</span></div>
+                                <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span>Disponibles:</span> <span class="font-bold text-emerald-600" id="informe-uci-adulto-disponibles">—</span></div>
                             </div>
                         </div>
                         <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <p class="font-semibold text-slate-700">UPC Pediatría (UCI/UTI Pede)</p>
-                            <div class="mt-2 space-y-1">
-                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">12</span></div>
-                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">10</span></div>
-                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">2</span></div>
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="p-1.5 bg-indigo-50 text-indigo-600 rounded-md"><i class="fa-solid fa-lungs"></i></span>
+                                <p class="font-bold text-slate-700 uppercase text-[11px]">Camas Adulto UTI</p>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold" id="informe-uti-adulto-dotacion">—</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600" id="informe-uti-adulto-ocupadas">—</span></div>
+                                <div class="flex justify-between"><span>Reservadas:</span> <span class="font-bold text-amber-600" id="informe-uti-adulto-reservadas">—</span></div>
+                                <div class="flex justify-between"><span>Bloqueadas:</span> <span class="font-bold text-rose-600" id="informe-uti-adulto-bloqueadas">—</span></div>
+                                <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span>Disponibles:</span> <span class="font-bold text-emerald-600" id="informe-uti-adulto-disponibles">—</span></div>
                             </div>
                         </div>
                         <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <p class="font-semibold text-slate-700">Cuidados Medios / Básicos</p>
-                            <div class="mt-2 space-y-1">
-                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold">150</span></div>
-                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600">132</span></div>
-                                <div class="flex justify-between"><span>Disponibles:</span> <span class="font-bold text-emerald-600">18</span></div>
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="p-1.5 bg-teal-50 text-teal-600 rounded-md"><i class="fa-solid fa-child"></i></span>
+                                <p class="font-bold text-slate-700 uppercase text-[11px]">Camas Pediatría UCIP</p>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold" id="informe-ucip-pedi-dotacion">—</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600" id="informe-ucip-pedi-ocupadas">—</span></div>
+                                <div class="flex justify-between"><span>Reservadas:</span> <span class="font-bold text-amber-600" id="informe-ucip-pedi-reservadas">—</span></div>
+                                <div class="flex justify-between"><span>Bloqueadas:</span> <span class="font-bold text-rose-600" id="informe-ucip-pedi-bloqueadas">—</span></div>
+                                <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span>Disponibles:</span> <span class="font-bold text-emerald-600" id="informe-ucip-pedi-disponibles">—</span></div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="p-1.5 bg-purple-50 text-purple-600 rounded-md"><i class="fa-solid fa-baby"></i></span>
+                                <p class="font-bold text-slate-700 uppercase text-[11px]">Camas Pediatría UTIP</p>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between"><span>Dotación:</span> <span class="font-bold" id="informe-utip-pedi-dotacion">—</span></div>
+                                <div class="flex justify-between"><span>Ocupadas:</span> <span class="font-bold text-blue-600" id="informe-utip-pedi-ocupadas">—</span></div>
+                                <div class="flex justify-between"><span>Reservadas:</span> <span class="font-bold text-amber-600" id="informe-utip-pedi-reservadas">—</span></div>
+                                <div class="flex justify-between"><span>Bloqueadas:</span> <span class="font-bold text-rose-600" id="informe-utip-pedi-bloqueadas">—</span></div>
+                                <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span>Disponibles:</span> <span class="font-bold text-emerald-600" id="informe-utip-pedi-disponibles">—</span></div>
                             </div>
                         </div>
                     </div>
@@ -889,9 +917,7 @@
                 <!-- Novedades de Turno -->
                 <div>
                     <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">2. Novedades y Eventos Relevantes</h4>
-                    <textarea class="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500" rows="4" placeholder="Ingrese las novedades del turno saliente...">- Paciente ingresado en cama UTI-04 en ventilación mecánica tras cirugía de urgencia.
-- Se gestionan 2 traslados pendientes con Macrorred para liberación de camas UPC.
-- Pabellón solicita 3 camas de salida UPC para cirugías programadas de la mañana.</textarea>
+                    <textarea class="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500" rows="6" placeholder="Ingrese aquí las novedades y eventos relevantes del turno..."></textarea>
                 </div>
             </div>
         </section>
@@ -1714,11 +1740,16 @@
         // Mapa de celdas exactas por indicador: total de camas y camas ocupadas.
         // Disponibles y % de ocupación se calculan a partir de ambas.
         const CELDAS_CAMAS_CRITICAS = {
-            'uci-adulto': { sheet: 'adulto',    totalCell: 'D49', ocupadasCell: 'D50' },
-            'uti-adulto': { sheet: 'adulto',    totalCell: 'E49', ocupadasCell: 'E50' },
-            'ucip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'D55', ocupadasCell: 'D56' },
-            'utip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'E55', ocupadasCell: 'E56' }
+            'uci-adulto': { sheet: 'adulto',    totalCell: 'D49', ocupadasCell: 'D50', reservadasCeldas: ['E18', 'E19', 'E26'], bloqueadasCeldas: ['Q18', 'Q19', 'Q26'] },
+            'uti-adulto': { sheet: 'adulto',    totalCell: 'E49', ocupadasCell: 'E50', reservadasCeldas: ['E20', 'E27', 'E33'], bloqueadasCeldas: ['Q20', 'Q27', 'Q33'] },
+            'ucip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'D55', ocupadasCell: 'D56', reservadasCeldas: ['E15'], bloqueadasCeldas: ['Q15'] },
+            'utip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'E55', ocupadasCell: 'E56', reservadasCeldas: ['E16'], bloqueadasCeldas: ['Q16'] }
         };
+
+        // Guarda el último dato cargado de cada categoría para reutilizarlo
+        // en otras vistas (ej. "1. Resumen Ocupacional" del Informe de Turno)
+        // sin tener que volver a pedirlo a Google Sheets.
+        const datosCamasCriticas = {};
 
         // Valores de respaldo mientras se conecta la hoja real / si falla la lectura
         const kpiCamasFallback = {
@@ -1770,11 +1801,31 @@
             }
         }
 
+        // Lee y suma varias celdas (ej: ['Q18','Q19','Q26']) de la misma pestaña.
+        // Devuelve null solo si TODAS fallan; celdas individuales que fallen
+        // o estén vacías cuentan como 0 dentro de la suma.
+        async function leerSumaCeldas(sheetName, cellRefs) {
+            if (!cellRefs || cellRefs.length === 0) return null;
+            let suma = 0;
+            let algunaOk = false;
+            for (const ref of cellRefs) {
+                try {
+                    const valor = await leerCeldaGvizConReintento(sheetName, ref);
+                    if (valor != null) { suma += valor; algunaOk = true; }
+                } catch (err) {
+                    console.warn(`No se pudo leer ${sheetName}!${ref}`, err);
+                }
+            }
+            return algunaOk ? suma : null;
+        }
+
         async function cargarKpisCamasCriticas() {
             for (const prefix of Object.keys(CELDAS_CAMAS_CRITICAS)) {
                 const cfg = CELDAS_CAMAS_CRITICAS[prefix];
                 let total = null;
                 let ocupadas = null;
+                let reservadas = null;
+                let bloqueadas = null;
 
                 try {
                     total = await leerCeldaGvizConReintento(cfg.sheet, cfg.totalCell);
@@ -1790,17 +1841,52 @@
                     }
                 }
 
+                if (cfg.reservadasCeldas) {
+                    reservadas = await leerSumaCeldas(cfg.sheet, cfg.reservadasCeldas);
+                }
+
+                if (cfg.bloqueadasCeldas) {
+                    bloqueadas = await leerSumaCeldas(cfg.sheet, cfg.bloqueadasCeldas);
+                }
+
+                let datoFinal;
                 if (total == null) {
                     // No se pudo obtener el total ni tras reintentar -> usar respaldo completo
                     console.warn(`Usando dato de ejemplo para "${prefix}".`);
-                    pintarKpiCard(prefix, kpiCamasFallback[prefix]);
+                    datoFinal = { ...kpiCamasFallback[prefix], reservadas, bloqueadas };
                 } else {
-                    pintarKpiCard(prefix, { total, ocupadas });
+                    datoFinal = { total, ocupadas, reservadas, bloqueadas };
                 }
+
+                datosCamasCriticas[prefix] = datoFinal;
+                pintarKpiCard(prefix, datoFinal);
             }
+
+            pintarResumenOcupacionalInforme();
 
             const upd = document.getElementById('dash-kpi-updated');
             if (upd) upd.innerText = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Pinta las 4 tarjetas de "1. Resumen Ocupacional" del Informe de
+        // Turno (Dotación, Ocupadas, Reservadas, Bloqueadas, Disponibles),
+        // reutilizando los mismos datos ya leídos para Inicio/Dashboard.
+        function pintarResumenOcupacionalInforme() {
+            for (const prefix of Object.keys(CELDAS_CAMAS_CRITICAS)) {
+                const d = datosCamasCriticas[prefix];
+                if (!d) continue;
+                const disponibles = (d.total != null && d.ocupadas != null) ? Math.max(d.total - d.ocupadas, 0) : null;
+
+                const set = (campo, valor) => {
+                    const el = document.getElementById(`informe-${prefix}-${campo}`);
+                    if (el) el.innerText = (valor == null || valor === '') ? '—' : valor;
+                };
+                set('dotacion', d.total);
+                set('ocupadas', d.ocupadas);
+                set('reservadas', d.reservadas);
+                set('bloqueadas', d.bloqueadas);
+                set('disponibles', disponibles);
+            }
         }
 
         // Abre la hoja "PABELLON/TRASLADOS" (4ta pestaña) del archivo
@@ -2388,6 +2474,7 @@
             if (modId === 'hec-huap') cargarCasosHecHuap();
             if (modId === 'macrorred') renderMacrorredTable();
             if (modId === 'ref-adulto') renderRefAdulto();
+            if (modId === 'informe') cargarKpisCamasCriticas();
             if (modId === 'ref-pede') renderRefPede();
 
             // Módulos personalizados: cargan su tabla en vivo al abrirlos

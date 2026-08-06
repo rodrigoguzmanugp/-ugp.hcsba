@@ -228,7 +228,68 @@
         </div>
     </div>
 
-    <!-- Sub-Header Module Navigation Bar -->
+    <!-- ========================================================= -->
+    <!-- MODAL: CREAR MÓDULO PERSONALIZADO                          -->
+    <!-- ========================================================= -->
+    <div id="modal-crear-modulo" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-layer-group text-brand-400"></i>
+                    <h3 class="font-bold text-base">Crear Módulo</h3>
+                </div>
+                <button onclick="cerrarModalCrearModulo()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <form onsubmit="crearModuloCustom(event)" class="p-6 space-y-4 overflow-y-auto text-sm">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Nombre del Módulo</label>
+                    <input id="cm-nombre" type="text" placeholder="Ej. Comité de Ética" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Descripción corta</label>
+                    <input id="cm-descripcion" type="text" placeholder="Ej. Registro y seguimiento de casos" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Ícono</label>
+                        <select id="cm-icono" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
+                            <option value="fa-file-excel">📊 Planilla</option>
+                            <option value="fa-clipboard-list">📋 Registro</option>
+                            <option value="fa-user-doctor">🩺 Clínico</option>
+                            <option value="fa-hospital">🏥 Hospital</option>
+                            <option value="fa-bell">🔔 Alertas</option>
+                            <option value="fa-truck-medical">🚑 Traslados</option>
+                            <option value="fa-book-medical">📘 Protocolo</option>
+                            <option value="fa-chart-line">📈 Indicadores</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Color</label>
+                        <select id="cm-color" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
+                            <option value="brand">Azul (marca)</option>
+                            <option value="emerald">Verde</option>
+                            <option value="amber">Ámbar</option>
+                            <option value="rose">Rosado</option>
+                            <option value="indigo">Índigo</option>
+                            <option value="teal">Verde azulado</option>
+                            <option value="purple">Púrpura</option>
+                            <option value="sky">Celeste</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1">Enlace de Google Sheet (opcional)</label>
+                    <input id="cm-sheet-url" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
+                    <p class="text-[10px] text-slate-400 mt-1">Puedes dejarlo vacío y configurarlo después con "Configurar Enlace" dentro del módulo. La planilla debe estar compartida como "Cualquiera con el enlace puede ver".</p>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-lg py-2.5 transition shadow">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Crear Módulo
+                </button>
+            </form>
+        </div>
+    </div>
     <nav class="bg-white border-b border-slate-200 shadow-sm no-print sticky top-16 z-30 overflow-x-auto">
         <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium py-2 whitespace-nowrap">
             <button onclick="switchModule('home')" id="nav-home" class="nav-btn active px-3 py-2 rounded-md transition text-brand-600 bg-brand-50 border border-brand-200">
@@ -258,6 +319,7 @@
             <button data-restrict-guest="true" onclick="navigateToModule('ref-pede')" data-restrict-guest="true" id="nav-ref-pede" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
                 <i class="fa-solid fa-child-reaching mr-1.5"></i> Ref. Pediatría/Gine
             </button>
+            <div id="nav-custom-container" class="flex space-x-1 sm:space-x-2"></div>
         </div>
     </nav>
 
@@ -463,6 +525,18 @@
                                 <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">Ref. Pediatría / Gine</h4>
                                 <p class="text-xs text-slate-500">Abrir Google Sheet & Contactos <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Aquí se insertan las tarjetas de módulos personalizados creados por el usuario -->
+                    <div id="modulos-custom-grid" class="contents"></div>
+
+                    <div data-requires-write="true" onclick="abrirModalCrearModulo()" class="bg-slate-50 p-5 rounded-xl border-2 border-dashed border-slate-300 hover:border-brand-500 hover:bg-white transition cursor-pointer group flex items-center justify-center min-h-[76px]">
+                        <div class="flex items-center space-x-3 text-slate-400 group-hover:text-brand-600">
+                            <div class="w-10 h-10 rounded-lg border-2 border-dashed border-slate-300 group-hover:border-brand-500 flex items-center justify-center">
+                                <i class="fa-solid fa-plus text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-sm">Crear Módulo</h4>
                         </div>
                     </div>
 
@@ -1996,6 +2070,233 @@
             switchModule(modId);
         }
 
+        // ---------------------------------------------------------------
+        // MÓDULOS PERSONALIZADOS ("Crear Módulo")
+        // Permite agregar en caliente nuevos módulos de solo lectura,
+        // con las mismas propiedades que Novedades/HEC-HUAP/etc.:
+        // tarjeta en Inicio, ítem de navegación, botón "Abrir Google Sheet
+        // en Nueva Pestaña" y "Configurar Enlace" (gateado por permisos de
+        // escritura), y una tabla en vivo (solo lectura) desde el Sheet.
+        // Se guardan en localStorage -> visibles solo en este navegador.
+        // ---------------------------------------------------------------
+        const MODULOS_CUSTOM_KEY = 'gc_modulos_custom';
+
+        function obtenerModulosCustom() {
+            try { return JSON.parse(localStorage.getItem(MODULOS_CUSTOM_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function guardarModulosCustom(lista) {
+            localStorage.setItem(MODULOS_CUSTOM_KEY, JSON.stringify(lista));
+        }
+
+        function slugify(texto) {
+            return 'm-' + texto.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // sin tildes
+                .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                .slice(0, 30);
+        }
+
+        function abrirModalCrearModulo() {
+            if (bloquearSiInvitado()) return;
+            document.getElementById('modal-crear-modulo').classList.remove('hidden');
+            document.getElementById('modal-crear-modulo').classList.add('flex');
+        }
+
+        function cerrarModalCrearModulo() {
+            document.getElementById('modal-crear-modulo').classList.add('hidden');
+            document.getElementById('modal-crear-modulo').classList.remove('flex');
+        }
+
+        function crearModuloCustom(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('cm-nombre').value.trim();
+            const descripcion = document.getElementById('cm-descripcion').value.trim() || 'Abrir Google Sheet & Datos';
+            const icono = document.getElementById('cm-icono').value;
+            const color = document.getElementById('cm-color').value;
+            const sheetUrl = document.getElementById('cm-sheet-url').value.trim();
+
+            if (!nombre) return;
+
+            const modulos = obtenerModulosCustom();
+            let id = slugify(nombre);
+            if (modulos.some(m => m.id === id) || document.getElementById(`mod-${id}`)) {
+                id = `${id}-${Date.now().toString().slice(-4)}`;
+            }
+
+            const nuevoModulo = { id, nombre, descripcion, icono, color, sheetUrl };
+            modulos.push(nuevoModulo);
+            guardarModulosCustom(modulos);
+
+            if (sheetUrl) localStorage.setItem(`sheet_url_${id}`, sheetUrl);
+
+            renderModulosCustom();
+            cerrarModalCrearModulo();
+            event.target.reset();
+            navigateToModule(id);
+        }
+
+        function eliminarModuloCustom(id) {
+            if (!confirm('¿Eliminar este módulo? Esta acción no se puede deshacer (no borra la planilla de Google, solo el acceso desde aquí).')) return;
+            const modulos = obtenerModulosCustom().filter(m => m.id !== id);
+            guardarModulosCustom(modulos);
+            localStorage.removeItem(`sheet_url_${id}`);
+            // Vuelve al Inicio si el módulo eliminado era el que estaba visible
+            switchModule('home');
+            renderModulosCustom(true);
+        }
+
+        // Extrae { spreadsheetId, gid } desde una URL de Google Sheets pegada por el usuario
+        function extraerIdYGidDeUrl(url) {
+            const idMatch = String(url || '').match(/\/d\/([a-zA-Z0-9-_]+)/);
+            const gidMatch = String(url || '').match(/[#&?]gid=([0-9]+)/);
+            return {
+                spreadsheetId: idMatch ? idMatch[1] : null,
+                gid: gidMatch ? gidMatch[1] : null
+            };
+        }
+
+        function getBanColor(color) {
+            // Paleta segura (clases completas, no interpoladas) para que Tailwind no las purgue
+            const paletas = {
+                brand:   { bg100: 'bg-brand-100', text600: 'text-brand-600', bg600: 'bg-brand-600' },
+                emerald: { bg100: 'bg-emerald-100', text600: 'text-emerald-600', bg600: 'bg-emerald-600' },
+                amber:   { bg100: 'bg-amber-100', text600: 'text-amber-600', bg600: 'bg-amber-600' },
+                rose:    { bg100: 'bg-rose-100', text600: 'text-rose-600', bg600: 'bg-rose-600' },
+                indigo:  { bg100: 'bg-indigo-100', text600: 'text-indigo-600', bg600: 'bg-indigo-600' },
+                teal:    { bg100: 'bg-teal-100', text600: 'text-teal-600', bg600: 'bg-teal-600' },
+                purple:  { bg100: 'bg-purple-100', text600: 'text-purple-600', bg600: 'bg-purple-600' },
+                sky:     { bg100: 'bg-sky-100', text600: 'text-sky-600', bg600: 'bg-sky-600' }
+            };
+            return paletas[color] || paletas.brand;
+        }
+
+        // Genera (si no existe) el <section> del módulo personalizado, con
+        // banner + tabla en vivo de solo lectura, igual estilo que HEC/HUAP.
+        function crearSeccionModuloCustom(m) {
+            if (document.getElementById(`mod-${m.id}`)) return; // ya existe
+            const pal = getBanColor(m.color);
+            const main = document.querySelector('main');
+            const section = document.createElement('section');
+            section.id = `mod-${m.id}`;
+            section.className = 'module-section hidden space-y-6';
+            section.innerHTML = `
+                <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-slate-700/50">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 ${pal.bg100} bg-opacity-20 rounded-lg border border-white/20">
+                                <i class="fa-solid ${m.icono} ${pal.text600} text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-white">${m.nombre}</h3>
+                                <p class="text-xs text-slate-300">${m.descripcion}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="cargarModuloCustom('${m.id}')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> Actualizar
+                        </button>
+                        <button onclick="openModuleSheet('${m.id}')" class="${pal.bg600} hover:opacity-90 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition shadow flex items-center">
+                            <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir Google Sheet en Nueva Pestaña
+                        </button>
+                        <button data-requires-write="true" onclick="configureSheetUrl('${m.id}', '${m.nombre.replace(/'/g, "\\'")}')" class="bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2.5 rounded-lg text-xs transition border border-white/20">
+                            <i class="fa-solid fa-gear mr-1.5"></i> Configurar Enlace
+                        </button>
+                        <button data-requires-write="true" onclick="eliminarModuloCustom('${m.id}')" class="bg-red-500/20 hover:bg-red-500/40 text-red-200 font-medium px-3 py-2.5 rounded-lg text-xs transition border border-red-400/30">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="custom-${m.id}-head"></thead>
+                            <tbody id="custom-${m.id}-body" class="divide-y divide-slate-100">
+                                <tr><td class="p-4 text-center text-slate-400">Sin enlace configurado todavía.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            main.appendChild(section);
+        }
+
+        async function cargarModuloCustom(id) {
+            const thead = document.getElementById(`custom-${id}-head`);
+            const tbody = document.getElementById(`custom-${id}-body`);
+            if (!thead || !tbody) return;
+
+            const url = getSheetUrl(id);
+            const { spreadsheetId, gid } = extraerIdYGidDeUrl(url);
+
+            if (!spreadsheetId) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-amber-600">Este módulo aún no tiene un enlace de Google Sheet configurado. Usa "Configurar Enlace".</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const { encabezados, filas } = gid
+                    ? await leerHojaCompletaGvizPorGid(spreadsheetId, gid)
+                    : await leerHojaCompletaGviz(spreadsheetId, ''); // hoja por defecto si no hay gid
+
+                const filasConDatos = (filas || []).filter(f => f.some(v => String(v ?? '').trim() !== ''));
+                if (filasConDatos.length === 0) {
+                    thead.innerHTML = '';
+                    tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos en esta planilla.</td></tr>';
+                    return;
+                }
+
+                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
+                tbody.innerHTML = filasConDatos.map(f => '<tr class="hover:bg-slate-50">'
+                    + f.map(v => `<td class="p-3 text-slate-700">${v ?? ''}</td>`).join('')
+                    + '</tr>').join('');
+            } catch (err) {
+                console.warn(`No se pudo leer el módulo personalizado "${id}":`, err);
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Verifica que la planilla esté compartida como "Cualquiera con el enlace puede ver".</td></tr>';
+            }
+        }
+
+        // Dibuja: tarjeta en Inicio + ítem de navegación + sección (una vez).
+        // reconstruirNav=true fuerza rehacer también la barra de navegación
+        // (usado tras eliminar un módulo, para que desaparezca su botón).
+        function renderModulosCustom(reconstruirNav) {
+            const modulos = obtenerModulosCustom();
+            const grid = document.getElementById('modulos-custom-grid');
+            const navContainer = document.getElementById('nav-custom-container');
+
+            grid.innerHTML = modulos.map(m => {
+                const pal = getBanColor(m.color);
+                return `
+                <div data-restrict-guest="true" onclick="navigateToModule('${m.id}')" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 hover:shadow-md transition cursor-pointer group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg ${pal.bg100} ${pal.text600} flex items-center justify-center group-hover:${pal.bg600} group-hover:text-white transition">
+                            <i class="fa-solid ${m.icono} text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600">${m.nombre}</h4>
+                            <p class="text-xs text-slate-500">${m.descripcion}</p>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (navContainer && (reconstruirNav || navContainer.children.length !== modulos.length)) {
+                navContainer.innerHTML = modulos.map(m => `
+                    <button data-restrict-guest="true" id="nav-${m.id}" onclick="navigateToModule('${m.id}')" class="nav-btn flex items-center px-3 py-2 rounded-md transition text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                        <i class="fa-solid ${m.icono} mr-1.5"></i> ${m.nombre}
+                    </button>
+                `).join('');
+            }
+
+            modulos.forEach(crearSeccionModuloCustom);
+            aplicarSesionEnInterfaz(sesionActiva || {}); // re-aplica permisos (botones nuevos) si ya hay sesión
+        }
+
         // Data Structures & Initial Mock Data (Adult Enero 2026 & Pediatría 2025 Layout)
         const bedsData = [
             // UPC Adulto
@@ -2088,6 +2389,9 @@
             if (modId === 'macrorred') renderMacrorredTable();
             if (modId === 'ref-adulto') renderRefAdulto();
             if (modId === 'ref-pede') renderRefPede();
+
+            // Módulos personalizados: cargan su tabla en vivo al abrirlos
+            if (obtenerModulosCustom().some(m => m.id === modId)) cargarModuloCustom(modId);
         }
 
 
@@ -2606,6 +2910,7 @@
             if (!supabaseClient) {
                 document.getElementById('supabase-config-warning').classList.remove('hidden');
             }
+            renderModulosCustom(true);
             cargarKpisCamasCriticas();
             await restaurarSesion(); // si hay sesión activa de Supabase, salta el login
         };

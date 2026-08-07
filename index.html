@@ -194,6 +194,9 @@
                         <i class="fa-solid fa-user-check mr-2"></i> Usuarios Pendientes
                         <span id="badge-pendientes" class="hidden ml-1.5 bg-white text-rose-600 rounded-full px-1.5 text-[10px] font-bold">0</span>
                     </button>
+                    <button id="btn-conectar-google" onclick="conectarGoogle()" title="Conecta tu Gmail para leer hojas privadas donde tengas permiso" class="hidden sm:flex items-center bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg font-medium border border-white/20 transition">
+                        <i class="fa-brands fa-google mr-1.5"></i> <span id="btn-conectar-google-texto">Conectar Google</span>
+                    </button>
                     <div class="hidden sm:flex items-center bg-slate-800 pl-3 pr-1.5 py-1.5 rounded-lg border border-slate-700 space-x-2">
                         <div class="text-right leading-tight">
                             <p class="text-xs font-semibold text-white" id="user-badge-nombre">—</p>
@@ -1398,6 +1401,18 @@
             ? null
             : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Captura el token de acceso de Google apenas Supabase lo entregue
+        // (justo después de "Conectar Google", o en el login inicial si ya
+        // estaba vinculado). Google solo lo entrega en ese momento puntual,
+        // por eso se guarda en sessionStorage para reutilizarlo ~1 hora.
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session?.provider_token) {
+                    guardarTokenGoogle(session.provider_token, session.expires_in);
+                }
+            });
+        }
+
         // Correo del administrador que debe aprobar cuentas nuevas
         const ADMIN_EMAIL = 'rodrigoguzman.ugp@gmail.com';
 
@@ -1578,6 +1593,7 @@
             shell.classList.remove('hidden');
             shell.classList.add('flex');
             aplicarSesionEnInterfaz(sesion);
+            actualizarBotonGoogle();
         }
 
         async function cerrarSesion() {
@@ -1813,9 +1829,119 @@
             'utip-pedi':  { total: 10, ocupadas: 9 }
         };
 
-        // Lee una única celda (ej: "D49") de una pestaña de Google Sheets
-        // vía la API pública gviz (JSON), usando el parámetro "range".
+        // ---------------------------------------------------------------
+        // CONEXIÓN CON GOOGLE (para leer Sheets privados con el permiso
+        // real de Lector/Editor que cada usuario ya tiene en Drive).
+        // Usa OAuth vinculado a la sesión de Supabase (linkIdentity) para
+        // no perder el login/rol actual del sistema. El token dura ~1 hora.
+        // ---------------------------------------------------------------
+        let googleAccessToken = null;
+
+        function guardarTokenGoogle(token, expiresIn) {
+            if (!token) return;
+            googleAccessToken = token;
+            const expiraEn = Date.now() + ((expiresIn ? expiresIn : 55 * 60) * 1000);
+            sessionStorage.setItem('gc_google_token', token);
+            sessionStorage.setItem('gc_google_token_exp', String(expiraEn));
+            actualizarBotonGoogle();
+        }
+
+        function obtenerTokenGoogleVigente() {
+            if (googleAccessToken) return googleAccessToken;
+            const tok = sessionStorage.getItem('gc_google_token');
+            const exp = Number(sessionStorage.getItem('gc_google_token_exp') || 0);
+            if (tok && Date.now() < exp) { googleAccessToken = tok; return tok; }
+            return null;
+        }
+
+        function actualizarBotonGoogle() {
+            const btn = document.getElementById('btn-conectar-google');
+            const texto = document.getElementById('btn-conectar-google-texto');
+            if (!btn || !texto) return;
+            if (obtenerTokenGoogleVigente()) {
+                texto.innerText = 'Google Conectado';
+                btn.classList.add('bg-emerald-600/30', 'border-emerald-400/40');
+            } else {
+                texto.innerText = 'Conectar Google';
+                btn.classList.remove('bg-emerald-600/30', 'border-emerald-400/40');
+            }
+        }
+
+        async function conectarGoogle() {
+            if (bloquearSiInvitado('El modo Invitado no puede conectar una cuenta de Google.')) return;
+            if (!supabaseClient) { alert('Supabase no está configurado.'); return; }
+            const { error } = await supabaseClient.auth.linkIdentity({
+                provider: 'google',
+                options: {
+                    scopes: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            if (error) alert('No se pudo iniciar la conexión con Google: ' + error.message);
+            // El navegador redirige a Google y vuelve; onAuthStateChange captura el token.
+        }
+
+        // Lee un rango (o una hoja completa si se omite `rango`) usando la
+        // API oficial de Google Sheets con el token del usuario. Devuelve
+        // null si no hay token o si falla (así el que llama puede seguir
+        // usando el método público como respaldo).
+        async function leerConAPIOficial(spreadsheetId, sheetName, rango) {
+            const token = obtenerTokenGoogleVigente();
+            if (!token || !spreadsheetId) return null;
+            try {
+                let nombreHoja = sheetName;
+                if (!nombreHoja) {
+                    // Sin nombre de hoja: usa la primera pestaña del archivo
+                    const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (!metaRes.ok) return null;
+                    const meta = await metaRes.json();
+                    nombreHoja = meta.sheets?.[0]?.properties?.title;
+                    if (!nombreHoja) return null;
+                }
+                const a1 = rango ? `${nombreHoja}!${rango}` : nombreHoja;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(a1)}`;
+                const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+                if (!res.ok) return null; // token vencido / sin acceso -> respaldo público
+                const data = await res.json();
+                return (data.values || []).map(f => f.map(v => formatearValorCelda(v ?? '')));
+            } catch (err) {
+                console.warn('API oficial de Google Sheets falló, se usará el método público:', err);
+                return null;
+            }
+        }
+
+        // Igual que leerConAPIOficial, pero resolviendo la pestaña por su "gid"
+        async function leerConAPIOficialPorGid(spreadsheetId, gid, rango) {
+            const token = obtenerTokenGoogleVigente();
+            if (!token || !spreadsheetId) return null;
+            try {
+                const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!metaRes.ok) return null;
+                const meta = await metaRes.json();
+                const hoja = (meta.sheets || []).find(s => String(s.properties.sheetId) === String(gid));
+                if (!hoja) return null;
+                return await leerConAPIOficial(spreadsheetId, hoja.properties.title, rango);
+            } catch (err) {
+                console.warn('API oficial de Google Sheets (por gid) falló, se usará el método público:', err);
+                return null;
+            }
+        }
+
+        // Lee una única celda (ej: "D49") de una pestaña de Google Sheets.
+        // Si el usuario conectó su Google, usa la API oficial (funciona con
+        // hojas privadas); si no, usa el método público gviz.
         async function leerCeldaGviz(sheetName, cellRef) {
+            const oficial = await leerConAPIOficial(INFORME_TURNO_SPREADSHEET_ID, sheetName, `${cellRef}:${cellRef}`);
+            if (oficial) {
+                const valor = oficial[0]?.[0];
+                const num = Number(valor);
+                return valor != null && !isNaN(num) ? num : null;
+            }
+
             const url = `https://docs.google.com/spreadsheets/d/${INFORME_TURNO_SPREADSHEET_ID}/gviz/tq`
                 + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${cellRef}`;
             const res = await fetch(url);
@@ -1959,8 +2085,12 @@
         const SOLICITUDES_UCIP_RANGO = 'A53:G57';  // Salidas Camas UCIP (máx 5 filas de datos, tras encabezado en fila 52)
         const SOLICITUDES_UTIP_RANGO = 'A67:G71';  // Salidas Camas UTIP (máx 5 filas, desde fila 67)
 
-        // Descarga un rango rectangular de una pestaña vía la API pública gviz (JSON)
+        // Descarga un rango rectangular de una pestaña. Prioriza la API
+        // oficial (si el usuario conectó Google) y cae al método público.
         async function leerRangoGviz(sheetName, rango) {
+            const oficial = await leerConAPIOficial(NOVEDADES_SPREADSHEET_ID, sheetName, rango);
+            if (oficial) return oficial;
+
             const url = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/gviz/tq`
                 + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${rango}`;
             const res = await fetch(url);
@@ -2956,8 +3086,12 @@
         // (archivo distinto a "NOVEDADES..."). Mientras tanto se muestra un
         // aviso para configurarlo.
         // ---------------------------------------------------------------
-        // Descarga una hoja completa (sin rango fijo) vía la API pública gviz (JSON)
+        // Descarga una hoja completa (sin rango fijo). Prioriza la API
+        // oficial (si el usuario conectó Google) y cae al método público.
         async function leerHojaCompletaGviz(spreadsheetId, sheetName) {
+            const oficial = await leerConAPIOficial(spreadsheetId, sheetName || null, null);
+            if (oficial) return oficial.length ? { encabezados: oficial[0], filas: oficial.slice(1) } : { encabezados: [], filas: [] };
+
             const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`
                 + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&headers=1`;
             return _parseGvizJson(url);
@@ -2968,6 +3102,9 @@
         // nombre -- más confiable si el nombre exacto puede tener espacios
         // o mayúsculas distintas a lo esperado.
         async function leerHojaCompletaGvizPorGid(spreadsheetId, gid) {
+            const oficial = await leerConAPIOficialPorGid(spreadsheetId, gid, null);
+            if (oficial) return oficial.length ? { encabezados: oficial[0], filas: oficial.slice(1) } : { encabezados: [], filas: [] };
+
             const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`
                 + `?tqx=out:json&gid=${gid}&headers=1`;
             return _parseGvizJson(url);

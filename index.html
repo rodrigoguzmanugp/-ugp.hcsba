@@ -964,6 +964,16 @@
                 </div>
             </div>
 
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="cdt-buscador" type="text" oninput="pintarTablaGenericaFiltrada('cdt')"
+                        placeholder="Buscar por nombre o RUT..."
+                        class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                </div>
+                <div id="cdt-filtros" class="flex flex-wrap gap-2"></div>
+            </div>
+
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
@@ -1019,21 +1029,24 @@
             </div>
 
             <!-- Selector de pestaña estilo Drive: HEC / HUAP -->
-            <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex-wrap gap-3">
-                <div class="flex bg-slate-100 rounded-lg p-1">
-                    <button id="tab-btn-hec" onclick="cambiarPestanaHecHuap('hec')" class="flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition bg-white text-rose-700 shadow-sm">
-                        <i class="fa-solid fa-hospital-user mr-1.5"></i> HEC - Julio 2026
-                    </button>
-                    <button id="tab-btn-huap" onclick="cambiarPestanaHecHuap('huap')" class="flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition text-slate-500">
-                        <i class="fa-solid fa-truck-medical mr-1.5"></i> HUAP - Julio 2026
-                    </button>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex bg-slate-100 rounded-lg p-1">
+                        <button id="tab-btn-hec" onclick="cambiarPestanaHecHuap('hec')" class="flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition bg-white text-rose-700 shadow-sm">
+                            <i class="fa-solid fa-hospital-user mr-1.5"></i> HEC - Julio 2026
+                        </button>
+                        <button id="tab-btn-huap" onclick="cambiarPestanaHecHuap('huap')" class="flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition text-slate-500">
+                            <i class="fa-solid fa-truck-medical mr-1.5"></i> HUAP - Julio 2026
+                        </button>
+                    </div>
+                    <div class="relative flex-1 min-w-[200px] max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input id="hechuap-buscador" type="text" oninput="pintarTablaGenericaFiltrada('hechuap')"
+                            placeholder="Buscar por nombre o RUT..."
+                            class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <label class="text-xs font-semibold text-slate-500">Filtrar por Estado:</label>
-                    <select id="filtro-estado-hechuap" onchange="pintarCasosHecHuap()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-1.5 focus:ring-brand-500 focus:border-brand-500">
-                        <option value="TODOS">Todos</option>
-                    </select>
-                </div>
+                <div id="hechuap-filtros" class="flex flex-wrap gap-2"></div>
             </div>
 
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1080,27 +1093,30 @@
                     <h2 class="text-lg font-bold text-slate-900">Red de Derivaciones - Macrorred & Extra-sistema</h2>
                     <p class="text-xs text-slate-500">Gestión de cupos con otros hospitales públicos, UGCC Nacional y prestadores privados</p>
                 </div>
-                <button onclick="openMacrorredModal()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm">
-                    <i class="fa-solid fa-plus mr-1.5"></i> Registrar Derivación
+                <button onclick="cargarRedDerivaciones()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                    <i class="fa-solid fa-rotate mr-1"></i> Actualizar
                 </button>
             </div>
 
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="macrorred-buscador" type="text" oninput="pintarTablaGenericaFiltrada('macrorred')"
+                        placeholder="Buscar por nombre o RUT..."
+                        class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                </div>
+                <div id="macrorred-filtros" class="flex flex-wrap gap-2"></div>
+            </div>
+
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                        <tr>
-                            <th class="p-3">Tipo Red</th>
-                            <th class="p-3">Establecimiento</th>
-                            <th class="p-3">Paciente</th>
-                            <th class="p-3">Diagnóstico</th>
-                            <th class="p-3">Tipo Cama</th>
-                            <th class="p-3 text-center">Estado UGCC</th>
-                        </tr>
-                    </thead>
-                    <tbody id="macrorred-table-body" class="divide-y divide-slate-100">
-                        <!-- JS dynamic -->
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="macrorred-table-head"></thead>
+                        <tbody id="macrorred-table-body" class="divide-y divide-slate-100">
+                            <tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1136,11 +1152,30 @@
                     <h2 class="text-lg font-bold text-slate-900">Directorio Referentes Médicos Adulto 2026</h2>
                     <p class="text-xs text-slate-500">Jefaturas de servicio, coordinadores UPC y médicos de turno adultos</p>
                 </div>
-                <input type="text" id="search-ref-adulto" onkeyup="filterDirectory('adulto')" placeholder="Buscar especialidad o médico..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-full sm:w-64">
+                <button onclick="cargarDirectorioAdulto()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                    <i class="fa-solid fa-rotate mr-1"></i> Actualizar
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="ref-adulto-container">
-                <!-- JS populated cards -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="ref-adulto-buscador" type="text" oninput="pintarTablaGenericaFiltrada('ref-adulto')"
+                        placeholder="Buscar por nombre o RUT..."
+                        class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                </div>
+                <div id="ref-adulto-filtros" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="ref-adulto-table-head"></thead>
+                        <tbody id="ref-adulto-table-body" class="divide-y divide-slate-100">
+                            <tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1176,11 +1211,30 @@
                     <h2 class="text-lg font-bold text-slate-900">Directorio Referentes Médicos Pediatría y Ginecología</h2>
                     <p class="text-xs text-slate-500">Jefaturas Infantiles, Neonatología, Maternidad y UPC Pediátrica</p>
                 </div>
-                <input type="text" id="search-ref-pede" onkeyup="filterDirectory('pede')" placeholder="Buscar por médico o unidad..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-full sm:w-64">
+                <button onclick="cargarDirectorioPede()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                    <i class="fa-solid fa-rotate mr-1"></i> Actualizar
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="ref-pede-container">
-                <!-- JS populated cards -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="ref-pede-buscador" type="text" oninput="pintarTablaGenericaFiltrada('ref-pede')"
+                        placeholder="Buscar por nombre o RUT..."
+                        class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                </div>
+                <div id="ref-pede-filtros" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="ref-pede-table-head"></thead>
+                        <tbody id="ref-pede-table-body" class="divide-y divide-slate-100">
+                            <tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1913,7 +1967,7 @@
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
             if (!json.table || !json.table.rows) return [];
-            return json.table.rows.map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
+            return json.table.rows.map(r => (r.c || []).map(cell => formatearValorCelda(cell ? (cell.v ?? cell.f ?? '') : '')));
         }
 
         // Palabras típicas de encabezado: si una fila las trae en la 1ª o 2ª
@@ -2582,25 +2636,6 @@
         // CDT Requests Mock
         // HEC / HUAP Cases
         // Macrorred Cases
-        const macrorredCases = [
-            { net: 'RED PÚBLICA', hospital: 'Hospital San Borja Arriarán', patient: 'Felipe Sanhueza', dx: 'CIRUGÍA VASCULAR', bedType: 'UPC UCI', status: 'COORDINADO' },
-            { net: 'PRIVADO / EXTRA-SISTEMA', hospital: 'Clínica Dávila', patient: 'Patricia Osorio', dx: 'ECMO RESPIRATORIO', bedType: 'UCI ADULTO', status: 'EN GESTIÓN' }
-        ];
-
-        // Referral Doctors Directory
-        const refAdultoData = [
-            { spec: 'Jefatura UGCC Central', doctor: 'Dr. Fernando Medina', phone: '+56 9 9123 4567', email: 'fmedina@hospital central.cl', schedule: '24/7 Presencial/Llamada' },
-            { spec: 'Jefe UPC Adultos (UCI/UTI)', doctor: 'Dra. Claudia Sepúlveda', phone: '+56 9 8234 5678', email: 'csepulveda@hospital central.cl', schedule: '08:00 - 17:00' },
-            { spec: 'Coordinador Pabellón Adulto', doctor: 'Dr. Marcelo Rivas', phone: '+56 9 7345 6789', email: 'mrivas@hospital central.cl', schedule: 'Turno Diurno' }
-        ];
-
-        const refPedeData = [
-            { spec: 'Jefatura Pediatría y Neonatología', doctor: 'Dra. Andrea Morales', phone: '+56 9 6456 7890', email: 'amorales@hospital central.cl', schedule: 'Jornada Completa' },
-            { spec: 'Coordinador UPC Pediátrica', doctor: 'Dr. Gonzalo Vidal', phone: '+56 9 5567 8901', email: 'gvidal@hospital central.cl', schedule: 'Turno 24 hrs' },
-            { spec: 'Referente Obstetricia y Ginecología', doctor: 'Dra. Patricia Figueroa', phone: '+56 9 4678 9012', email: 'pfigueroa@hospital central.cl', schedule: 'Guardia Turno' }
-        ];
-
-
         // Clock Initialization
         function updateClock() {
             const now = new Date();
@@ -2639,10 +2674,10 @@
             if (modId === 'inhabil') { renderInhabilTable(); cargarResidentesTurno(); }
             if (modId === 'cdt') cargarSolicitudesCDT();
             if (modId === 'hec-huap') cargarCasosHecHuap();
-            if (modId === 'macrorred') renderMacrorredTable();
-            if (modId === 'ref-adulto') renderRefAdulto();
+            if (modId === 'macrorred') cargarRedDerivaciones();
+            if (modId === 'ref-adulto') cargarDirectorioAdulto();
             if (modId === 'informe') cargarKpisCamasCriticas();
-            if (modId === 'ref-pede') renderRefPede();
+            if (modId === 'ref-pede') cargarDirectorioPede();
 
             // Módulos personalizados: cargan su tabla en vivo al abrirlos
             if (obtenerModulosCustomCache().some(m => m.id === modId)) cargarModuloCustom(modId);
@@ -2938,6 +2973,154 @@
             return _parseGvizJson(url);
         }
 
+        // ---------------------------------------------------------------
+        // MOTOR GENÉRICO DE TABLA: buscador (Nombre/RUT/Paciente) + filtros
+        // por columna (estilo Excel) + orden opcional + badge de Estado.
+        // Reutilizado por: Solicitudes CDT, Casos HEC/HUAP, Red de
+        // Derivaciones (Macrorred), y los Directorios de Referentes.
+        // ---------------------------------------------------------------
+        const tablaGenericaCache = {};
+
+        async function cargarTablaGenerica(cfg) {
+            // cfg: { key, theadId, tbodyId, buscadorId, filtrosId, spreadsheetId,
+            //        gid, sheetName, columnasFiltro (regex[] opcional),
+            //        estadoBadge (bool), ordenInvertido (bool), limite (num),
+            //        mensajeSinConfig }
+            const thead = document.getElementById(cfg.theadId);
+            const tbody = document.getElementById(cfg.tbodyId);
+            const filtrosCont = cfg.filtrosId ? document.getElementById(cfg.filtrosId) : null;
+            if (!thead || !tbody) return;
+
+            if (!cfg.spreadsheetId) {
+                thead.innerHTML = '';
+                if (filtrosCont) filtrosCont.innerHTML = '';
+                tbody.innerHTML = `<tr><td class="p-4 text-center text-amber-600">${cfg.mensajeSinConfig || 'Falta configurar el enlace de esta planilla.'}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
+            try {
+                const { encabezados, filas } = cfg.gid
+                    ? await leerHojaCompletaGvizPorGid(cfg.spreadsheetId, cfg.gid)
+                    : await leerHojaCompletaGviz(cfg.spreadsheetId, cfg.sheetName || '');
+
+                const filasConDatos = (filas || []).filter(f => f.some(v => String(v ?? '').trim() !== ''));
+                tablaGenericaCache[cfg.key] = { encabezados, filas: filasConDatos, cfg };
+
+                if (filasConDatos.length === 0) {
+                    thead.innerHTML = '';
+                    if (filtrosCont) filtrosCont.innerHTML = '';
+                    tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos.</td></tr>';
+                    return;
+                }
+
+                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3 whitespace-nowrap">${h || ''}</th>`).join('') + '</tr>';
+                construirFiltrosColumnaGenerico(cfg.key, encabezados, filasConDatos);
+                pintarTablaGenericaFiltrada(cfg.key);
+            } catch (err) {
+                console.warn(`No se pudo leer "${cfg.key}":`, err);
+                thead.innerHTML = '';
+                if (filtrosCont) filtrosCont.innerHTML = '';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
+            }
+        }
+
+        function construirFiltrosColumnaGenerico(key, encabezados, filas) {
+            const cache = tablaGenericaCache[key];
+            const cfg = cache.cfg;
+            if (!cfg.filtrosId) return;
+            const cont = document.getElementById(cfg.filtrosId);
+            if (!cont) return;
+
+            let indices;
+            if (cfg.columnasFiltro && cfg.columnasFiltro.length) {
+                indices = encabezados
+                    .map((h, i) => ({ h: String(h || '').toLowerCase(), i }))
+                    .filter(c => cfg.columnasFiltro.some(p => p.test(c.h)))
+                    .map(c => c.i);
+            } else {
+                indices = encabezados.map((_, i) => i);
+            }
+
+            cont.innerHTML = indices.map(i => {
+                const h = encabezados[i];
+                const valoresUnicos = [...new Set(filas.map(f => String(f[i] ?? '').trim()).filter(v => v !== ''))].sort();
+                // Sin filtro explícito de columnas: se omiten las columnas con demasiados
+                // valores distintos (texto libre), ya que un filtro ahí no ayuda.
+                if (valoresUnicos.length === 0 || (!cfg.columnasFiltro && valoresUnicos.length > 60)) return '';
+                const opciones = valoresUnicos.map(v => `<option value="${v}">${v}</option>`).join('');
+                return `
+                    <select data-col-filtro="${i}" onchange="pintarTablaGenericaFiltrada('${key}')"
+                        class="text-[11px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-400 max-w-[180px]">
+                        <option value="">${h || `Col. ${i + 1}`}: Todos</option>
+                        ${opciones}
+                    </select>`;
+            }).join('');
+        }
+
+        function pintarTablaGenericaFiltrada(key) {
+            const cache = tablaGenericaCache[key];
+            if (!cache) return;
+            const { encabezados, filas, cfg } = cache;
+            const tbody = document.getElementById(cfg.tbodyId);
+            if (!tbody) return;
+
+            const busqueda = (cfg.buscadorId && document.getElementById(cfg.buscadorId)?.value || '').trim().toLowerCase();
+
+            // Buscador: prioriza columnas de Nombre/RUT/Paciente; si no hay,
+            // busca en toda la fila.
+            const idxNombreRut = encabezados
+                .map((h, i) => ({ h: String(h || '').toLowerCase(), i }))
+                .filter(c => /nombre|rut|paciente/.test(c.h))
+                .map(c => c.i);
+
+            const filtrosActivos = cfg.filtrosId
+                ? Array.from(document.querySelectorAll(`#${cfg.filtrosId} select[data-col-filtro]`))
+                    .map(sel => ({ col: Number(sel.dataset.colFiltro), valor: sel.value }))
+                    .filter(f => f.valor !== '')
+                : [];
+
+            let filtradas = filas.filter(f => {
+                const pasaFiltros = filtrosActivos.every(fl => String(f[fl.col] ?? '').trim() === fl.valor);
+                if (!pasaFiltros) return false;
+                if (!busqueda) return true;
+                const campos = idxNombreRut.length > 0 ? idxNombreRut.map(i => f[i]) : f;
+                return campos.some(v => String(v ?? '').toLowerCase().includes(busqueda));
+            });
+
+            if (cfg.ordenInvertido) filtradas = filtradas.slice().reverse();
+            if (cfg.limite) filtradas = filtradas.slice(0, cfg.limite);
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${encabezados.length}" class="p-4 text-center text-slate-400">Sin resultados para este filtro/búsqueda.</td></tr>`;
+                return;
+            }
+
+            const idxEstado = cfg.estadoBadge ? encabezados.findIndex(h => /estado/i.test(h || '')) : -1;
+
+            tbody.innerHTML = filtradas.map(f => '<tr class="hover:bg-slate-50">'
+                + f.map((v, i) => i === idxEstado
+                    ? `<td class="p-3"><span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${v ?? ''}</span></td>`
+                    : `<td class="p-3 text-slate-700 align-top">${v ?? ''}</td>`
+                ).join('')
+                + '</tr>').join('');
+        }
+
+
+        // (año, mes 0-indexado, día). Esto lo convierte a "07-08-2026".
+        function formatearValorCelda(valor) {
+            if (typeof valor === 'string') {
+                const m = valor.match(/^Date\((\d+),\s*(\d+),\s*(\d+)\)$/);
+                if (m) {
+                    const [, anio, mesIdx, dia] = m;
+                    const mes = String(Number(mesIdx) + 1).padStart(2, '0');
+                    const diaStr = String(Number(dia)).padStart(2, '0');
+                    return `${diaStr}-${mes}-${anio}`;
+                }
+            }
+            return valor;
+        }
+
         async function _parseGvizJson(url) {
             const res = await fetch(url);
             const text = await res.text();
@@ -2950,47 +3133,23 @@
             // primer dato real; tomarla como encabezado pierde el título
             // verdadero de las columnas y corre todos los datos una fila).
             const encabezados = (json.table.cols || []).map(c => c.label || '');
-            const filas = (json.table.rows || []).map(r => (r.c || []).map(cell => (cell ? (cell.v ?? cell.f ?? '') : '')));
+            const filas = (json.table.rows || []).map(r => (r.c || []).map(cell => formatearValorCelda(cell ? (cell.v ?? cell.f ?? '') : '')));
             return { encabezados, filas };
         }
 
-        async function cargarSolicitudesCDT() {
-            const thead = document.getElementById('cdt-table-head');
-            const tbody = document.getElementById('cdt-table-body');
-
-            if (!CDT_SPREADSHEET_ID || !CDT_SHEET_NAME) {
-                thead.innerHTML = '';
-                tbody.innerHTML = '<tr><td class="p-4 text-center text-amber-600">Falta configurar el ID y la pestaña de "SOLICITUDES CDT" para mostrar los datos reales.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
-            try {
-                const { encabezados, filas } = await leerHojaCompletaGviz(CDT_SPREADSHEET_ID, CDT_SHEET_NAME);
-                if (filas.length === 0) {
-                    thead.innerHTML = '';
-                    tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos.</td></tr>';
-                    return;
-                }
-
-                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
-
-                const datosConContenido = filas.filter(f => f.some(v => String(v ?? '').trim() !== ''));
-                const ultimos30 = datosConContenido.slice(-30).reverse(); // más recientes primero
-
-                if (ultimos30.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${encabezados.length}" class="p-4 text-center text-slate-400">Sin solicitudes registradas.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = ultimos30.map(f => '<tr class="hover:bg-slate-50">'
-                    + f.map(v => `<td class="p-3 text-slate-700">${v ?? ''}</td>`).join('')
-                    + '</tr>').join('');
-            } catch (err) {
-                console.warn('No se pudo leer "SOLICITUDES CDT":', err);
-                thead.innerHTML = '';
-                tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
-            }
+        function cargarSolicitudesCDT() {
+            cargarTablaGenerica({
+                key: 'cdt',
+                theadId: 'cdt-table-head',
+                tbodyId: 'cdt-table-body',
+                buscadorId: 'cdt-buscador',
+                filtrosId: 'cdt-filtros',
+                spreadsheetId: CDT_SPREADSHEET_ID,
+                sheetName: CDT_SHEET_NAME,
+                ordenInvertido: true,
+                limite: 30,
+                mensajeSinConfig: 'Falta configurar el ID y la pestaña de "SOLICITUDES CDT" para mostrar los datos reales.'
+            });
         }
 
         // Module 6: HEC & HUAP Render
@@ -3010,7 +3169,6 @@
         };
 
         let hecHuapPestanaActual = 'hec';
-        let hecHuapDatos = { encabezados: [], filas: [] }; // datos ya cargados de la pestaña activa
 
         function cambiarPestanaHecHuap(pestana) {
             hecHuapPestanaActual = pestana;
@@ -3020,144 +3178,85 @@
             cargarCasosHecHuap();
         }
 
-        async function cargarCasosHecHuap() {
-            const thead = document.getElementById('hechuap-table-head');
-            const tbody = document.getElementById('hechuap-table-body');
-            const filtroEstado = document.getElementById('filtro-estado-hechuap');
-
-            if (!HECHUAP_SPREADSHEET_ID) {
-                thead.innerHTML = '';
-                tbody.innerHTML = '<tr><td class="p-4 text-center text-amber-600">Falta configurar el ID de "REGISTRO CASOS HEC Y HUAP" para mostrar los datos reales.</td></tr>';
-                filtroEstado.innerHTML = '<option value="TODOS">Todos</option>';
-                return;
-            }
-
-            tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Cargando...</td></tr>';
-            try {
-                const gid = HECHUAP_GIDS[hecHuapPestanaActual];
-                hecHuapDatos = await leerHojaCompletaGvizPorGid(HECHUAP_SPREADSHEET_ID, gid);
-
-                // Arma el selector de Estado con los valores únicos encontrados
-                // en la columna cuyo encabezado contenga "ESTADO"
-                const idxEstado = hecHuapDatos.encabezados.findIndex(h => /estado/i.test(h || ''));
-                const estadoSeleccionado = filtroEstado.value || 'TODOS';
-                if (idxEstado >= 0) {
-                    const valoresUnicos = [...new Set(hecHuapDatos.filas.map(f => String(f[idxEstado] ?? '').trim()).filter(v => v !== ''))].sort();
-                    filtroEstado.innerHTML = '<option value="TODOS">Todos</option>' + valoresUnicos.map(v => `<option value="${v}">${v}</option>`).join('');
-                    filtroEstado.value = valoresUnicos.includes(estadoSeleccionado) ? estadoSeleccionado : 'TODOS';
-                } else {
-                    filtroEstado.innerHTML = '<option value="TODOS">Todos</option>';
-                }
-
-                pintarCasosHecHuap();
-            } catch (err) {
-                console.warn(`No se pudo leer "REGISTRO CASOS HEC Y HUAP" (${hecHuapPestanaActual}):`, err);
-                thead.innerHTML = '';
-                tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Reintenta con "Actualizar".</td></tr>';
-            }
-        }
-
-        function pintarCasosHecHuap() {
-            const thead = document.getElementById('hechuap-table-head');
-            const tbody = document.getElementById('hechuap-table-body');
-            const { encabezados, filas } = hecHuapDatos;
-
-            if (!filas || filas.length === 0) {
-                thead.innerHTML = '';
-                tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin casos registrados en esta pestaña.</td></tr>';
-                return;
-            }
-
-            thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
-
-            const idxEstado = encabezados.findIndex(h => /estado/i.test(h || ''));
-            const filtro = document.getElementById('filtro-estado-hechuap').value;
-
-            let filasConDatos = filas.filter(f => f.some(v => String(v ?? '').trim() !== ''));
-            if (filtro && filtro !== 'TODOS' && idxEstado >= 0) {
-                filasConDatos = filasConDatos.filter(f => String(f[idxEstado] ?? '').trim() === filtro);
-            }
-
-            if (filasConDatos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${encabezados.length}" class="p-4 text-center text-slate-400">Sin casos para este filtro.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filasConDatos.map(f => '<tr class="hover:bg-slate-50">'
-                + f.map((v, i) => i === idxEstado
-                    ? `<td class="p-3"><span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${v ?? ''}</span></td>`
-                    : `<td class="p-3 text-slate-700">${v ?? ''}</td>`
-                ).join('')
-                + '</tr>').join('');
+        function cargarCasosHecHuap() {
+            cargarTablaGenerica({
+                key: 'hechuap',
+                theadId: 'hechuap-table-head',
+                tbodyId: 'hechuap-table-body',
+                buscadorId: 'hechuap-buscador',
+                filtrosId: 'hechuap-filtros',
+                spreadsheetId: HECHUAP_SPREADSHEET_ID,
+                gid: HECHUAP_GIDS[hecHuapPestanaActual],
+                columnasFiltro: [/estado/i], // solo se filtra por la columna "Estado"
+                estadoBadge: true,
+                mensajeSinConfig: 'Falta configurar el ID de "REGISTRO CASOS HEC Y HUAP" para mostrar los datos reales.'
+            });
         }
 
         // Module 7: Macrorred Render
-        function renderMacrorredTable() {
-            const tbody = document.getElementById('macrorred-table-body');
-            tbody.innerHTML = macrorredCases.map(m => `
-                <tr class="hover:bg-slate-50">
-                    <td class="p-3 font-semibold text-slate-700">${m.net}</td>
-                    <td class="p-3 font-bold text-slate-800">${m.hospital}</td>
-                    <td class="p-3 text-slate-700">${m.patient}</td>
-                    <td class="p-3 text-slate-600">${m.dx}</td>
-                    <td class="p-3 font-bold text-brand-600">${m.bedType}</td>
-                    <td class="p-3 text-center"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${m.status}</span></td>
-                </tr>
-            `).join('');
+        // ---------------------------------------------------------------
+        // Red de Derivaciones (Macrorred) y Directorios de Referentes
+        // Fuentes: Google Sheets pendientes de configurar (usa "Configurar
+        // Enlace" en cada módulo una vez que tengas el archivo real).
+        // Los Directorios llevan además filtro por "Especialidad" y
+        // "Policlínico" (además del buscador de Nombre/RUT).
+        // ---------------------------------------------------------------
+        const MACRORRED_SPREADSHEET_ID = ''; // TODO: pegar aquí el ID real
+        const REF_ADULTO_SPREADSHEET_ID = ''; // TODO: pegar aquí el ID real
+        const REF_PEDE_SPREADSHEET_ID = '';   // TODO: pegar aquí el ID real
+
+        function cargarRedDerivaciones() {
+            cargarTablaGenerica({
+                key: 'macrorred',
+                theadId: 'macrorred-table-head',
+                tbodyId: 'macrorred-table-body',
+                buscadorId: 'macrorred-buscador',
+                filtrosId: 'macrorred-filtros',
+                spreadsheetId: MACRORRED_SPREADSHEET_ID || getSheetIdDesdeEnlace('macrorred'),
+                gid: getGidDesdeEnlace('macrorred'),
+                ordenInvertido: true,
+                mensajeSinConfig: 'Falta configurar el enlace de "MACRORRED Y PRESTADORES PRIVADOS" para mostrar los datos reales.'
+            });
         }
 
-        function openMacrorredModal() {
-            const hosp = prompt('Nombre del centro o clínica derivadora:');
-            if (hosp) {
-                macrorredCases.push({
-                    net: 'MACRORRED REGIONAL',
-                    hospital: hosp,
-                    patient: 'Paciente Derivado',
-                    dx: 'Derivación extra-sistema',
-                    bedType: 'UCI ADULTO',
-                    status: 'SOLICITADO'
-                });
-                renderMacrorredTable();
-            }
+        function cargarDirectorioAdulto() {
+            cargarTablaGenerica({
+                key: 'ref-adulto',
+                theadId: 'ref-adulto-table-head',
+                tbodyId: 'ref-adulto-table-body',
+                buscadorId: 'ref-adulto-buscador',
+                filtrosId: 'ref-adulto-filtros',
+                spreadsheetId: REF_ADULTO_SPREADSHEET_ID || getSheetIdDesdeEnlace('ref-adulto'),
+                gid: getGidDesdeEnlace('ref-adulto'),
+                columnasFiltro: [/especialidad/i, /policlin/i],
+                mensajeSinConfig: 'Falta configurar el enlace de "DIRECTORIO REFERENTES MÉDICOS ADULTO" para mostrar los datos reales.'
+            });
         }
 
-        // Modules 8 & 9: Doctor Directories
-        function renderRefAdulto() {
-            const container = document.getElementById('ref-adulto-container');
-            container.innerHTML = refAdultoData.map(d => getDoctorCardHTML(d)).join('');
+        function cargarDirectorioPede() {
+            cargarTablaGenerica({
+                key: 'ref-pede',
+                theadId: 'ref-pede-table-head',
+                tbodyId: 'ref-pede-table-body',
+                buscadorId: 'ref-pede-buscador',
+                filtrosId: 'ref-pede-filtros',
+                spreadsheetId: REF_PEDE_SPREADSHEET_ID || getSheetIdDesdeEnlace('ref-pede'),
+                gid: getGidDesdeEnlace('ref-pede'),
+                columnasFiltro: [/especialidad/i, /policlin/i],
+                mensajeSinConfig: 'Falta configurar el enlace de "DIRECTORIO REFERENTES PEDIATRÍA Y GINECOLOGÍA" para mostrar los datos reales.'
+            });
         }
 
-        function renderRefPede() {
-            const container = document.getElementById('ref-pede-container');
-            container.innerHTML = refPedeData.map(d => getDoctorCardHTML(d)).join('');
+        // Si el enlace fue configurado vía "Configurar Enlace" (guardado en
+        // enlacesConfigCache/Supabase), se usa ese ID/gid automáticamente.
+        function getSheetIdDesdeEnlace(modId) {
+            return extraerIdYGidDeUrl(enlacesConfigCache[modId] || '').spreadsheetId;
+        }
+        function getGidDesdeEnlace(modId) {
+            return extraerIdYGidDeUrl(enlacesConfigCache[modId] || '').gid;
         }
 
-        function getDoctorCardHTML(d) {
-            return `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2 hover:border-brand-500 transition">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">${d.spec}</span>
-                    <h4 class="font-bold text-slate-900 text-sm">${d.doctor}</h4>
-                    <div class="text-xs space-y-1 text-slate-600">
-                        <p><i class="fa-solid fa-phone text-slate-400 mr-2"></i> ${d.phone}</p>
-                        <p><i class="fa-solid fa-envelope text-slate-400 mr-2"></i> ${d.email}</p>
-                        <p><i class="fa-solid fa-calendar-check text-slate-400 mr-2"></i> ${d.schedule}</p>
-                    </div>
-                </div>
-            `;
-        }
 
-        function filterDirectory(type) {
-            const query = document.getElementById(`search-ref-${type}`).value.toLowerCase();
-            const data = type === 'adulto' ? refAdultoData : refPedeData;
-            const container = document.getElementById(`ref-${type}-container`);
-
-            const filtered = data.filter(d => 
-                d.doctor.toLowerCase().includes(query) || 
-                d.spec.toLowerCase().includes(query)
-            );
-
-            container.innerHTML = filtered.map(d => getDoctorCardHTML(d)).join('');
-        }
 
         // Initialize Default View
         window.onload = async function() {

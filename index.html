@@ -2113,8 +2113,28 @@
             window.open(printUrl, '_blank');
         }
 
+        // ---------------------------------------------------------------
+        // ENLACES DE GOOGLE SHEET COMPARTIDOS ENTRE TODOS LOS USUARIOS
+        // Antes "Configurar Enlace" solo guardaba en localStorage (por eso
+        // cada usuario veía algo distinto). Ahora se guarda en la tabla
+        // Supabase "enlaces_config", visible para todos. Se mantiene un
+        // caché en memoria (enlacesConfigCache) para que getSheetUrl()
+        // pueda seguir usándose de forma síncrona en el resto del código.
+        // Si Supabase no está configurado, cae a localStorage (modo local).
+        // ---------------------------------------------------------------
+        let enlacesConfigCache = {};
+
+        async function cargarEnlacesConfig() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('enlaces_config').select('mod_id, url');
+            if (error) { console.warn('No se pudieron cargar los enlaces compartidos:', error); return; }
+            enlacesConfigCache = {};
+            (data || []).forEach(row => { enlacesConfigCache[row.mod_id] = row.url; });
+        }
+
         function getSheetUrl(modId) {
-            // Check legacy local storage first for novedades
+            if (enlacesConfigCache[modId]) return enlacesConfigCache[modId];
+            // Respaldo local (por si Supabase no está disponible o aún no cargó)
             if (modId === 'novedades' && localStorage.getItem('novedades_sheet_url')) {
                 return localStorage.getItem('novedades_sheet_url');
             }
@@ -2135,17 +2155,36 @@
             openModuleSheet('novedades');
         }
 
-        function configureSheetUrl(modId, modName) {
+        async function configureSheetUrl(modId, modName) {
             if (bloquearSiInvitado()) return;
             const currentUrl = getSheetUrl(modId);
             const newUrl = prompt(`Ingrese la URL de Google Sheets para "${modName}":`, currentUrl);
-            if (newUrl && newUrl.trim() !== '') {
-                localStorage.setItem(`sheet_url_${modId}`, newUrl.trim());
-                if (modId === 'novedades') {
-                    localStorage.setItem('novedades_sheet_url', newUrl.trim());
+            if (!newUrl || newUrl.trim() === '') return;
+            const urlLimpia = newUrl.trim();
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('enlaces_config').upsert({
+                    mod_id: modId,
+                    url: urlLimpia,
+                    actualizado_por: sesionActiva?.usuario || 'desconocido',
+                    actualizado_en: new Date().toISOString()
+                });
+                if (error) {
+                    alert(`No se pudo guardar el enlace para todos los usuarios: ${error.message}\nSe guardó solo en este navegador como respaldo.`);
+                    localStorage.setItem(`sheet_url_${modId}`, urlLimpia);
+                    return;
                 }
-                alert(`¡Enlace de Google Sheets para "${modName}" actualizado correctamente!`);
+                enlacesConfigCache[modId] = urlLimpia;
+                alert(`¡Enlace de Google Sheets para "${modName}" actualizado! Este cambio ya es visible para todos los usuarios del sistema.`);
+            } else {
+                // Sin Supabase configurado: respaldo local (solo este navegador)
+                localStorage.setItem(`sheet_url_${modId}`, urlLimpia);
+                if (modId === 'novedades') localStorage.setItem('novedades_sheet_url', urlLimpia);
+                alert(`¡Enlace de Google Sheets para "${modName}" actualizado en este navegador! (Supabase no está configurado, así que este cambio no se comparte con otros usuarios todavía.)`);
             }
+
+            // Si el módulo tiene una tabla en vivo, refresca sus datos con el nuevo enlace
+            if (obtenerModulosCustomCache().some(m => m.id === modId)) cargarModuloCustom(modId);
         }
 
         function navigateToModule(modId) {
@@ -2163,17 +2202,39 @@
         // tarjeta en Inicio, ítem de navegación, botón "Abrir Google Sheet
         // en Nueva Pestaña" y "Configurar Enlace" (gateado por permisos de
         // escritura), y una tabla en vivo (solo lectura) desde el Sheet.
-        // Se guardan en localStorage -> visibles solo en este navegador.
+        // Se guardan en la tabla Supabase "modulos_custom" -> visibles para
+        // TODOS los usuarios del sistema. Se mantiene un caché en memoria
+        // (modulosCustomCache) para renderizar sin tener que re-consultar
+        // cada vez. Si Supabase no está configurado, cae a localStorage
+        // (modo local, solo visible en este navegador).
         // ---------------------------------------------------------------
-        const MODULOS_CUSTOM_KEY = 'gc_modulos_custom';
+        const MODULOS_CUSTOM_KEY = 'gc_modulos_custom'; // respaldo local
+        let modulosCustomCache = [];
 
-        function obtenerModulosCustom() {
-            try { return JSON.parse(localStorage.getItem(MODULOS_CUSTOM_KEY) || '[]'); }
-            catch { return []; }
+        // Devuelve el caché ya cargado (uso síncrono en el resto del código)
+        function obtenerModulosCustomCache() {
+            return modulosCustomCache;
         }
 
-        function guardarModulosCustom(lista) {
-            localStorage.setItem(MODULOS_CUSTOM_KEY, JSON.stringify(lista));
+        async function cargarModulosCustomDesdeSupabase() {
+            if (!supabaseClient) {
+                // Sin Supabase: usa el respaldo local
+                try { modulosCustomCache = JSON.parse(localStorage.getItem(MODULOS_CUSTOM_KEY) || '[]'); }
+                catch { modulosCustomCache = []; }
+                return;
+            }
+            const { data, error } = await supabaseClient.from('modulos_custom').select('*').order('creado_en', { ascending: true });
+            if (error) {
+                console.warn('No se pudieron cargar los módulos personalizados compartidos:', error);
+                return;
+            }
+            modulosCustomCache = (data || []).map(m => ({
+                id: m.id, nombre: m.nombre, descripcion: m.descripcion,
+                icono: m.icono, color: m.color, sheetUrl: m.sheet_url
+            }));
+            // También registra sus enlaces en el caché de enlaces, para que
+            // getSheetUrl(id) los encuentre igual que un módulo fijo.
+            modulosCustomCache.forEach(m => { if (m.sheetUrl && !enlacesConfigCache[m.id]) enlacesConfigCache[m.id] = m.sheetUrl; });
         }
 
         function slugify(texto) {
@@ -2194,7 +2255,7 @@
             document.getElementById('modal-crear-modulo').classList.remove('flex');
         }
 
-        function crearModuloCustom(event) {
+        async function crearModuloCustom(event) {
             event.preventDefault();
             const nombre = document.getElementById('cm-nombre').value.trim();
             const descripcion = document.getElementById('cm-descripcion').value.trim() || 'Abrir Google Sheet & Datos';
@@ -2204,17 +2265,32 @@
 
             if (!nombre) return;
 
-            const modulos = obtenerModulosCustom();
             let id = slugify(nombre);
-            if (modulos.some(m => m.id === id) || document.getElementById(`mod-${id}`)) {
+            if (modulosCustomCache.some(m => m.id === id) || document.getElementById(`mod-${id}`)) {
                 id = `${id}-${Date.now().toString().slice(-4)}`;
             }
 
             const nuevoModulo = { id, nombre, descripcion, icono, color, sheetUrl };
-            modulos.push(nuevoModulo);
-            guardarModulosCustom(modulos);
 
-            if (sheetUrl) localStorage.setItem(`sheet_url_${id}`, sheetUrl);
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('modulos_custom').insert({
+                    id, nombre, descripcion, icono, color,
+                    sheet_url: sheetUrl || null,
+                    creado_por: sesionActiva?.usuario || 'desconocido'
+                });
+                if (error) {
+                    alert(`No se pudo crear el módulo para todos los usuarios: ${error.message}\nSe creará solo en este navegador como respaldo.`);
+                    modulosCustomCache.push(nuevoModulo);
+                    guardarRespaldoLocalModulos();
+                } else {
+                    modulosCustomCache.push(nuevoModulo);
+                }
+            } else {
+                modulosCustomCache.push(nuevoModulo);
+                guardarRespaldoLocalModulos();
+            }
+
+            if (sheetUrl) enlacesConfigCache[id] = sheetUrl;
 
             renderModulosCustom();
             cerrarModalCrearModulo();
@@ -2222,10 +2298,22 @@
             navigateToModule(id);
         }
 
-        function eliminarModuloCustom(id) {
-            if (!confirm('¿Eliminar este módulo? Esta acción no se puede deshacer (no borra la planilla de Google, solo el acceso desde aquí).')) return;
-            const modulos = obtenerModulosCustom().filter(m => m.id !== id);
-            guardarModulosCustom(modulos);
+        function guardarRespaldoLocalModulos() {
+            localStorage.setItem(MODULOS_CUSTOM_KEY, JSON.stringify(modulosCustomCache));
+        }
+
+        async function eliminarModuloCustom(id) {
+            if (!confirm('¿Eliminar este módulo? Esta acción no se puede deshacer para todos los usuarios (no borra la planilla de Google, solo el acceso desde aquí).')) return;
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('modulos_custom').delete().eq('id', id);
+                if (error) { alert(`No se pudo eliminar: ${error.message}`); return; }
+                await supabaseClient.from('enlaces_config').delete().eq('mod_id', id);
+            }
+
+            modulosCustomCache = modulosCustomCache.filter(m => m.id !== id);
+            guardarRespaldoLocalModulos();
+            delete enlacesConfigCache[id];
             localStorage.removeItem(`sheet_url_${id}`);
             // Vuelve al Inicio si el módulo eliminado era el que estaba visible
             switchModule('home');
@@ -2351,7 +2439,7 @@
         // reconstruirNav=true fuerza rehacer también la barra de navegación
         // (usado tras eliminar un módulo, para que desaparezca su botón).
         function renderModulosCustom(reconstruirNav) {
-            const modulos = obtenerModulosCustom();
+            const modulos = obtenerModulosCustomCache();
             const grid = document.getElementById('modulos-custom-grid');
             const navContainer = document.getElementById('nav-custom-container');
 
@@ -2478,7 +2566,7 @@
             if (modId === 'ref-pede') renderRefPede();
 
             // Módulos personalizados: cargan su tabla en vivo al abrirlos
-            if (obtenerModulosCustom().some(m => m.id === modId)) cargarModuloCustom(modId);
+            if (obtenerModulosCustomCache().some(m => m.id === modId)) cargarModuloCustom(modId);
         }
 
 
@@ -2997,6 +3085,8 @@
             if (!supabaseClient) {
                 document.getElementById('supabase-config-warning').classList.remove('hidden');
             }
+            await cargarEnlacesConfig();
+            await cargarModulosCustomDesdeSupabase();
             renderModulosCustom(true);
             cargarKpisCamasCriticas();
             await restaurarSesion(); // si hay sesión activa de Supabase, salta el login

@@ -2353,9 +2353,9 @@
             const main = document.querySelector('main');
             const section = document.createElement('section');
             section.id = `mod-${m.id}`;
-            section.className = 'module-section hidden space-y-6';
+            section.className = 'module-section hidden space-y-4';
             section.innerHTML = `
-                <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-slate-700/50">
+                <div class="sticky top-16 z-20 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-md-center justify-between gap-4 border border-slate-700/50">
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
                             <div class="p-2 ${pal.bg100} bg-opacity-20 rounded-lg border border-white/20">
@@ -2383,9 +2383,20 @@
                     </div>
                 </div>
 
+                <!-- Buscador + filtros por columna (se completan al cargar los datos) -->
+                <div class="sticky top-[148px] z-10 bg-white rounded-xl border border-slate-200 shadow-sm p-3 space-y-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input id="custom-${m.id}-buscador" type="text" oninput="filtrarYPintarModuloCustom('${m.id}')"
+                            placeholder="Buscar por nombre o RUT..."
+                            class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400">
+                    </div>
+                    <div id="custom-${m.id}-filtros" class="flex flex-wrap gap-2"></div>
+                </div>
+
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
+                        <table class="w-full text-left text-xs table-auto">
                             <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200" id="custom-${m.id}-head"></thead>
                             <tbody id="custom-${m.id}-body" class="divide-y divide-slate-100">
                                 <tr><td class="p-4 text-center text-slate-400">Sin enlace configurado todavía.</td></tr>
@@ -2397,9 +2408,14 @@
             main.appendChild(section);
         }
 
+        // Caché de datos crudos por módulo personalizado, para poder
+        // filtrar/buscar en el cliente sin volver a pedirle a Google Sheets.
+        const moduloCustomDatosCache = {};
+
         async function cargarModuloCustom(id) {
             const thead = document.getElementById(`custom-${id}-head`);
             const tbody = document.getElementById(`custom-${id}-body`);
+            const filtrosCont = document.getElementById(`custom-${id}-filtros`);
             if (!thead || !tbody) return;
 
             const url = getSheetUrl(id);
@@ -2407,6 +2423,7 @@
 
             if (!spreadsheetId) {
                 thead.innerHTML = '';
+                if (filtrosCont) filtrosCont.innerHTML = '';
                 tbody.innerHTML = '<tr><td class="p-4 text-center text-amber-600">Este módulo aún no tiene un enlace de Google Sheet configurado. Usa "Configurar Enlace".</td></tr>';
                 return;
             }
@@ -2418,21 +2435,83 @@
                     : await leerHojaCompletaGviz(spreadsheetId, ''); // hoja por defecto si no hay gid
 
                 const filasConDatos = (filas || []).filter(f => f.some(v => String(v ?? '').trim() !== ''));
+                moduloCustomDatosCache[id] = { encabezados, filas: filasConDatos };
+
                 if (filasConDatos.length === 0) {
                     thead.innerHTML = '';
+                    if (filtrosCont) filtrosCont.innerHTML = '';
                     tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-400">Sin datos en esta planilla.</td></tr>';
                     return;
                 }
 
-                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3">${h || ''}</th>`).join('') + '</tr>';
-                tbody.innerHTML = filasConDatos.map(f => '<tr class="hover:bg-slate-50">'
-                    + f.map(v => `<td class="p-3 text-slate-700">${v ?? ''}</td>`).join('')
-                    + '</tr>').join('');
+                thead.innerHTML = '<tr>' + encabezados.map(h => `<th class="p-3 whitespace-nowrap">${h || ''}</th>`).join('') + '</tr>';
+                construirFiltrosColumna(id, encabezados, filasConDatos);
+                filtrarYPintarModuloCustom(id);
             } catch (err) {
                 console.warn(`No se pudo leer el módulo personalizado "${id}":`, err);
                 thead.innerHTML = '';
+                if (filtrosCont) filtrosCont.innerHTML = '';
                 tbody.innerHTML = '<tr><td class="p-4 text-center text-red-500">No se pudo cargar. Verifica que la planilla esté compartida como "Cualquiera con el enlace puede ver".</td></tr>';
             }
+        }
+
+        // Arma un <select> por cada columna con sus valores únicos (estilo
+        // filtro de columna de Excel/Sheets). Se reconstruye cada vez que
+        // se recargan los datos, así siempre refleja los valores vigentes.
+        function construirFiltrosColumna(id, encabezados, filas) {
+            const cont = document.getElementById(`custom-${id}-filtros`);
+            if (!cont) return;
+
+            cont.innerHTML = encabezados.map((h, i) => {
+                const valoresUnicos = [...new Set(filas.map(f => String(f[i] ?? '').trim()).filter(v => v !== ''))].sort();
+                if (valoresUnicos.length === 0 || valoresUnicos.length > 60) return ''; // columnas muy variadas (ej. texto libre) no llevan filtro
+                const opciones = valoresUnicos.map(v => `<option value="${v}">${v}</option>`).join('');
+                return `
+                    <select data-col-filtro="${i}" onchange="filtrarYPintarModuloCustom('${id}')"
+                        class="text-[11px] bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-400 max-w-[160px]">
+                        <option value="">${h || `Col. ${i+1}`}: Todos</option>
+                        ${opciones}
+                    </select>`;
+            }).join('');
+        }
+
+        function filtrarYPintarModuloCustom(id) {
+            const datos = moduloCustomDatosCache[id];
+            const tbody = document.getElementById(`custom-${id}-body`);
+            if (!datos || !tbody) return;
+
+            const { encabezados, filas } = datos;
+            const busqueda = (document.getElementById(`custom-${id}-buscador`)?.value || '').trim().toLowerCase();
+
+            // Prioriza columnas de Nombre/RUT para el buscador; si no existen, busca en toda la fila
+            const idxNombreRut = encabezados
+                .map((h, i) => ({ h: String(h || '').toLowerCase(), i }))
+                .filter(c => /nombre|rut|paciente/.test(c.h))
+                .map(c => c.i);
+
+            const filtrosActivos = Array.from(document.querySelectorAll(`#custom-${id}-filtros select[data-col-filtro]`))
+                .map(sel => ({ col: Number(sel.dataset.colFiltro), valor: sel.value }))
+                .filter(f => f.valor !== '');
+
+            let filtradas = filas.filter(f => {
+                const pasaFiltros = filtrosActivos.every(fl => String(f[fl.col] ?? '').trim() === fl.valor);
+                if (!pasaFiltros) return false;
+                if (!busqueda) return true;
+                const campos = idxNombreRut.length > 0 ? idxNombreRut.map(i => f[i]) : f;
+                return campos.some(v => String(v ?? '').toLowerCase().includes(busqueda));
+            });
+
+            // Más reciente primero (se asume que la planilla se llena de arriba hacia abajo)
+            filtradas = filtradas.slice().reverse();
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${encabezados.length}" class="p-4 text-center text-slate-400">Sin resultados para este filtro/búsqueda.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtradas.map(f => '<tr class="hover:bg-slate-50">'
+                + f.map(v => `<td class="p-3 text-slate-700 align-top">${v ?? ''}</td>`).join('')
+                + '</tr>').join('');
         }
 
         // Dibuja: tarjeta en Inicio + ítem de navegación + sección (una vez).

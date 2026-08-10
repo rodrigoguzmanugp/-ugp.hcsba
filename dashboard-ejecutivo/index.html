@@ -1,1 +1,823 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; }
+    a { color: #2563eb; }
+    a:hover { color: #1d4ed8; }
+    button { font-family: inherit; cursor: pointer; }
+  </style>
+</helmet>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;background:#0f172a;display:flex;align-items:center;justify-content:center;padding:24px">
+    <form onsubmit="{{ submitLogin }}" style="width:380px;background:#f8fafc;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,0.35);padding:28px">
+      <div style="width:56px;height:56px;border-radius:14px;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 14px">UGP</div>
+      <p style="text-align:center;font-weight:800;font-size:17px;margin:0 0 20px;color:#0f172a">Unidad de Gestión de Pacientes</p>
+      <div style="display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:20px;font-size:14px;font-weight:600">
+        <div style="flex:1;text-align:center;padding-bottom:10px;color:#0f172a;border-bottom:2px solid #2563eb">Iniciar Sesión</div>
+        <div style="flex:1;text-align:center;padding-bottom:10px;color:#94a3b8">Registrar Operador</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#64748b;margin-bottom:5px">Usuario o correo</label>
+        <input placeholder="usuario@hospital.cl" style="width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;background:#fff">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#64748b;margin-bottom:5px">Contraseña</label>
+        <input type="password" placeholder="••••••••" style="width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;background:#fff">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#64748b;margin-bottom:5px">Turno</label>
+          <select style="width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:10px 8px;font-size:14px;background:#fff"><option>Diurno</option><option>Noche</option><option>Largo</option></select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#64748b;margin-bottom:5px">Área</label>
+          <select style="width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:10px 8px;font-size:14px;background:#fff"><option>Ambas</option><option>Adulto</option><option>Pediatría</option></select>
+        </div>
+      </div>
+      <button type="submit" style="width:100%;background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px;font-weight:700;font-size:14px;margin-bottom:8px">Ingresar al Panel</button>
+      <button type="button" onclick="{{ enterGuest }}" style="width:100%;background:#fff;color:#334155;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-weight:600;font-size:14px">Ingresar como Invitado</button>
+    </form>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="position:sticky;top:0;z-index:20">
+    <header style="background:#0f172a;color:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:10px;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">UGP</div>
+        <div>
+          <h1 style="margin:0;font-size:18px;font-weight:800">Sistema de Gestión de Camas Hospitalarias</h1>
+          <p style="margin:0;font-size:12px;color:#94a3b8">Hospital San Borja Arriarán · Red Asistencial 2026</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px 14px;font-size:13px;color:#cbd5e1"><i class="fa-regular fa-clock" style="margin-right:6px;color:#60a5fa"></i>08-08-2026</div>
+        <button type="button" style="background:#059669;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px"><i class="fa-solid fa-file-excel" style="margin-right:6px"></i>Abrir Google Sheet</button>
+        <button type="button" style="background:#d97706;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px"><i class="fa-solid fa-scissors" style="margin-right:6px"></i>Solicitud Pabellón</button>
+        <button type="button" onclick="{{ logout }}" style="background:#1e293b;border:1px solid #334155;color:#fff;border-radius:10px;width:36px;height:36px"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </header>
+
+    <nav style="background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 32px;display:flex;gap:8px;overflow-x:auto">
+      <div style="padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;white-space:nowrap"><i class="fa-solid fa-house" style="margin-right:6px"></i>Inicio / Dashboard</div>
+      <sc-for list="{{ modules }}" as="mod" hint-placeholder-count="5">
+        <button type="button" onclick="{{ mod.onSelect }}" style="{{ mod.navStyle }}"><i class="{{ mod.icon }}" style="margin-right:6px"></i>{{ mod.name }}</button>
+      </sc-for>
+    </nav>
+    </div>
+
+    <main style="max-width:1280px;margin:0 auto;padding:28px 32px 56px">
+      <div style="margin-bottom:22px">
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#94a3b8;margin:0 0 4px">Resumen operativo · Adulto y Pediatría</p>
+        <h2 style="margin:0 0 6px;font-size:24px;font-weight:800;color:#0f172a">Ocupación hospitalaria en tiempo real</h2>
+        <p style="margin:0;color:#64748b;font-size:14px;max-width:640px">Monitoreo centralizado de camas críticas, turnos, derivaciones y solicitudes. Selecciona un módulo abajo para ver su resumen.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px">
+        <sc-for list="{{ globalKpis }}" as="kpi" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#64748b">{{ kpi.label }}</span>
+              <span style="width:32px;height:32px;border-radius:9px;background:{{ kpi.bg }};color:{{ kpi.text }};display:flex;align-items:center;justify-content:center;font-size:14px"><i class="{{ kpi.icon }}"></i></span>
+            </div>
+            <div style="font-size:26px;font-weight:800;color:#0f172a">{{ kpi.value }}</div>
+            <p style="margin:2px 0 10px;font-size:12px;color:#64748b">{{ kpi.sub }}</p>
+            <sc-if value="{{ kpi.hasBar }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden">
+                <div style="height:100%;border-radius:99px;background:{{ kpi.text }};width:{{ kpi.barWidth }}"></div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b">Módulos del Sistema</h3>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px">
+        <sc-for list="{{ modules }}" as="mod" hint-placeholder-count="5">
+          <button type="button" onclick="{{ mod.onSelect }}" style="{{ mod.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <span style="width:40px;height:40px;flex:none;border-radius:11px;background:{{ mod.bg }};color:{{ mod.text }};display:flex;align-items:center;justify-content:center;font-size:16px"><i class="{{ mod.icon }}"></i></span>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;text-align:left">{{ mod.name }}</span>
+            </div>
+            <p style="margin:0 0 12px;font-size:13px;color:#64748b;text-align:left">{{ mod.subtitle }}</p>
+            <span style="font-size:13px;font-weight:600;color:{{ mod.text }}">{{ mod.buttonLabel }} <i class="fa-solid fa-arrow-right" style="margin-left:4px"></i></span>
+          </button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:{{ detail.bg }}">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:32px;height:32px;border-radius:9px;background:#fff;color:{{ detail.text }};display:flex;align-items:center;justify-content:center;font-size:14px"><i class="{{ detail.icon }}"></i></span>
+              <span style="font-weight:700;color:#0f172a;font-size:15px">{{ detail.name }} — Resumen</span>
+            </div>
+            <button type="button" onclick="{{ closeDetail }}" style="background:transparent;border:0;color:#64748b;font-size:18px"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div style="padding:20px">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+              <sc-for list="{{ detail.kpis }}" as="kpi" hint-placeholder-count="4">
+                <div>
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:2px">{{ kpi.label }}</div>
+                  <div style="font-size:22px;font-weight:800;color:#0f172a">{{ kpi.value }}</div>
+                  <div style="font-size:12px;color:#64748b">{{ kpi.sub }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ detail.showGenericTable }}" hint-placeholder-val="{{ true }}">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding:8px;font-size:11px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">{{ detail.h1 }}</th>
+                    <th style="text-align:left;padding:8px;font-size:11px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">{{ detail.h2 }}</th>
+                    <th style="text-align:left;padding:8px;font-size:11px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">{{ detail.h3 }}</th>
+                    <th style="text-align:left;padding:8px;font-size:11px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">{{ detail.h4 }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ detail.rows }}" as="row" hint-placeholder-count="3">
+                    <tr>
+                      <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ row.r1 }}</td>
+                      <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ row.r2 }}</td>
+                      <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ row.r3 }}</td>
+                      <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ row.r4 }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </sc-if>
+
+            <sc-if value="{{ detail.isHec }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:28px">
+                <sc-for list="{{ detail.sections }}" as="sec" hint-placeholder-count="2">
+                  <div style="min-width:0">
+                    <p style="margin:0 0 10px;font-weight:800;color:#0f172a;font-size:15px">{{ sec.label }}</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">Estado</th>
+                          <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">Cantidad</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="7">
+                          <tr onclick="{{ row.onSelect }}" style="{{ row.rowStyle }}">
+                            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">{{ row.estado }}</td>
+                            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:700">{{ row.count }}</td>
+                          </tr>
+                        </sc-for>
+                      </tbody>
+                    </table>
+
+                    <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+                      <div style="width:110px;height:110px;border-radius:50%;background:{{ sec.pieGradient }};flex:none"></div>
+                      <div style="display:flex;flex-direction:column;gap:5px">
+                        <sc-for list="{{ sec.pieLegend }}" as="seg" hint-placeholder-count="7">
+                          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155">
+                            <span style="width:8px;height:8px;border-radius:2px;background:{{ seg.color }};flex:none"></span>
+                            <span>{{ seg.label }} — {{ seg.value }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+
+                    <sc-if value="{{ sec.selectedEstado }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                          <p style="margin:0;font-size:12px;font-weight:700;color:#0f172a">Pacientes — {{ sec.selectedEstado }}</p>
+                          <button type="button" onclick="{{ sec.closePatients }}" style="background:transparent;border:0;color:#64748b;font-size:12px;font-weight:600">Cerrar</button>
+                        </div>
+                        <div style="overflow-x:auto">
+                          <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:1200px">
+                            <thead>
+                              <tr>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Apertura</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Nombre y apellidos</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Sexo</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">RUT</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Edad</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Comuna Fonasa</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Diagnóstico</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Especialidad</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Centro origen</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Servicio destino</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Estado</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Equipo gestor</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Última actualización</th>
+                                <th style="text-align:left;padding:5px 6px;font-size:9px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Observaciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <sc-for list="{{ sec.patients }}" as="p" hint-placeholder-count="2">
+                                <tr>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.apertura }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.nombre }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9">{{ p.sexo }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.rut }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9">{{ p.edad }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.comuna }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.diagnostico }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.especialidad }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.centroOrigen }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.servicioDestino }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.estado }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.equipoGestor }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.actualizacion }}</td>
+                                  <td style="padding:5px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.observaciones }}</td>
+                                </tr>
+                              </sc-for>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ detail.isCdt }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:28px">
+                <sc-for list="{{ detail.cdtSections }}" as="sec" hint-placeholder-count="3">
+                  <div style="min-width:0">
+                    <p style="margin:0 0 10px;font-weight:800;color:#0f172a;font-size:15px">{{ sec.label }}</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">Categoría</th>
+                          <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0">Cantidad</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="4">
+                          <tr onclick="{{ row.onSelect }}" style="{{ row.rowStyle }}">
+                            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">{{ row.estado }}</td>
+                            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:700">{{ row.count }}</td>
+                          </tr>
+                        </sc-for>
+                      </tbody>
+                    </table>
+
+                    <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+                      <div style="width:110px;height:110px;border-radius:50%;background:{{ sec.pieGradient }};flex:none"></div>
+                      <div style="display:flex;flex-direction:column;gap:5px">
+                        <sc-for list="{{ sec.pieLegend }}" as="seg" hint-placeholder-count="4">
+                          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155">
+                            <span style="width:8px;height:8px;border-radius:2px;background:{{ seg.color }};flex:none"></span>
+                            <span>{{ seg.label }} — {{ seg.value }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+
+                    <sc-if value="{{ sec.selectedEstado }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                          <p style="margin:0;font-size:12px;font-weight:700;color:#0f172a">Pacientes — {{ sec.selectedEstado }}</p>
+                          <button type="button" onclick="{{ sec.closePatients }}" style="background:transparent;border:0;color:#64748b;font-size:12px;font-weight:600">Cerrar</button>
+                        </div>
+                        <div style="overflow-x:auto">
+                          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px">
+                            <thead>
+                              <tr>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Fecha</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Nombre paciente</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">N° ficha</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">RUT</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Diagnóstico</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Tipo solicitud</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Carpeta</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;white-space:nowrap">Hospitalizado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <sc-for list="{{ sec.patients }}" as="p" hint-placeholder-count="2">
+                                <tr>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.fecha }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.nombrePaciente }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">{{ p.ficha }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.rut }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.diagnostico }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.tipoSolicitud }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap">{{ p.carpeta }}</td>
+                                  <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">{{ p.hospitalizado }}</td>
+                                </tr>
+                              </sc-for>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <p style="font-size:12px;color:#94a3b8;margin:14px 0 0">Fuente: planilla del módulo · datos de referencia para esta maqueta.</p>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { view: 'login', sel: null };
+
+  // --- Conexión a Google Sheets reales (mismos archivos que usa el sistema principal) ---
+  INFORME_TURNO_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0'; // "INFORME DE TURNO"
+  CDT_ID = '1Z0ftjJPxnlu0_tSooyVde4nD_7c31JIhLwMAhZ5zLTs';           // "SOLICITUDES CDT"
+  CDT_SHEET = 'ORDENES';
+  HECHUAP_ID = '16I_nsbYTEyaJR6MlRFN9oyGgxIxjJM_V9SL25DXaqbE';       // "REGISTRO CASOS HEC Y HUAP"
+  HECHUAP_GIDS = { hec: '1635650262', huap: '122616479' };
+
+  modulesData = [
+    { id: 'camas', icon: 'fa-solid fa-bed', bg: '#ecfdf5', text: '#059669', name: 'Novedades 2026 (Camas)', subtitle: 'Ocupación y disponibilidad de camas críticas — Adulto y Pediatría',
+      h1: 'Unidad', h2: 'Total', h3: 'Ocupadas', h4: 'Disponibles',
+      kpis: [
+        { label: 'UCI Adulto', value: '92%', sub: '2 disponibles de 24' },
+        { label: 'UTI Adulto', value: '85%', sub: '3 disponibles de 20' },
+        { label: 'UCI Pediatría', value: '70%', sub: '3 disponibles de 10' },
+        { label: 'UTI Pediatría', value: '60%', sub: '4 disponibles de 10' },
+      ],
+      rows: [
+        { r1: 'UCI Adulto', r2: '24', r3: '22', r4: '2' },
+        { r1: 'UTI Adulto', r2: '20', r3: '17', r4: '3' },
+        { r1: 'UCI Pediatría', r2: '10', r3: '7', r4: '3' },
+        { r1: 'UTI Pediatría', r2: '10', r3: '6', r4: '4' },
+      ] },
+    { id: 'informe', icon: 'fa-solid fa-clipboard-list', bg: '#f0f9ff', text: '#0284c7', name: 'Informe de Turno', subtitle: 'Ingresos, egresos y estado crítico del turno vigente',
+      h1: 'Área', h2: 'Ingresos', h3: 'Egresos', h4: 'Críticos',
+      kpis: [
+        { label: 'Ingresos del turno', value: '8', sub: 'Últimas 12 horas' },
+        { label: 'Egresos del turno', value: '5', sub: 'Últimas 12 horas' },
+        { label: 'Pacientes críticos', value: '12', sub: 'Adulto + Pediatría' },
+        { label: 'Camas bloqueadas', value: '3', sub: 'Mantención / aislamiento' },
+      ],
+      rows: [
+        { r1: 'Adulto', r2: '6', r3: '3', r4: '9' },
+        { r1: 'Pediatría', r2: '2', r3: '2', r4: '3' },
+      ] },
+    { id: 'cdt', icon: 'fa-solid fa-stethoscope', bg: '#fffbeb', text: '#d97706', name: 'Solicitudes CDT', subtitle: 'Solicitudes de diagnóstico y tratamiento por especialidad',
+      kpis: [
+        { label: 'Solicitudes pendientes', value: '14', sub: 'Todas las especialidades' },
+        { label: 'Aprobadas hoy', value: '6', sub: '' },
+        { label: 'Rechazadas hoy', value: '2', sub: '' },
+        { label: 'Tiempo prom. respuesta', value: '2.4 h', sub: '' },
+      ],
+      pendientesEsp: [
+        { estado: 'Cirugía', count: 3 },
+        { estado: 'Medicina Interna', count: 2 },
+        { estado: 'Pediatría', count: 2 },
+        { estado: 'Ginecología', count: 1 },
+      ],
+      tiposSolicitud: [
+        { estado: 'Cirugía', count: 4 },
+        { estado: 'Medicina', count: 4 },
+      ],
+      carpetas: [
+        { estado: 'Luis Barraza', count: 4 },
+        { estado: 'Gestores', count: 4 },
+      ] },
+    { id: 'hec', icon: 'fa-solid fa-truck-medical', bg: '#fff1f2', text: '#e11d48', name: 'HEC y HUAP', subtitle: 'Estado de solicitudes de HEC y HUAP',
+      kpis: [
+        { label: 'HEC — En espera de cupo', value: '4', sub: '' },
+        { label: 'HEC — En traslado', value: '2', sub: '' },
+        { label: 'HUAP — En espera de cupo', value: '3', sub: '' },
+        { label: 'HUAP — En traslado', value: '1', sub: '' },
+      ],
+      hecEstados: [
+        { estado: 'En revisión por referente', count: 3 },
+        { estado: 'En espera de cupo', count: 4 },
+        { estado: 'En traslado', count: 2 },
+        { estado: 'Exitoso', count: 5 },
+        { estado: 'Rechazado', count: 1 },
+        { estado: 'Desestimado', count: 1 },
+        { estado: 'Fallece', count: 0 },
+      ],
+      huapEstados: [
+        { estado: 'En revisión por referente', count: 2 },
+        { estado: 'En espera de cupo', count: 3 },
+        { estado: 'En traslado', count: 1 },
+        { estado: 'Exitoso', count: 2 },
+        { estado: 'Rechazado', count: 0 },
+        { estado: 'Desestimado', count: 1 },
+        { estado: 'Fallece', count: 1 },
+      ] },
+    { id: 'macro', icon: 'fa-solid fa-network-wired', bg: '#f5f3ff', text: '#7c3aed', name: 'Macrorred / Privados', subtitle: 'Derivaciones a la red asistencial y convenios con prestadores privados',
+      kpis: [
+        { label: 'Derivaciones activas', value: '21', sub: '' },
+        { label: 'Camas gestionadas', value: '7', sub: 'Red privada' },
+        { label: 'Hospitales conveniados', value: '12', sub: '' },
+        { label: 'Solicitudes en espera', value: '4', sub: '' },
+      ],
+      macroEstados: [
+        { estado: 'En revisión por referente', count: 4 },
+        { estado: 'En espera de cupo', count: 5 },
+        { estado: 'En traslado', count: 2 },
+        { estado: 'Exitoso', count: 3 },
+        { estado: 'Rechazado', count: 1 },
+        { estado: 'Desestimado', count: 0 },
+        { estado: 'Fallece', count: 0 },
+      ],
+      privadosEstados: [
+        { estado: 'En revisión por referente', count: 1 },
+        { estado: 'En espera de cupo', count: 2 },
+        { estado: 'En traslado', count: 1 },
+        { estado: 'Exitoso', count: 1 },
+        { estado: 'Rechazado', count: 0 },
+        { estado: 'Desestimado', count: 1 },
+        { estado: 'Fallece', count: 0 },
+      ] },
+  ];
+
+  globalKpis = [
+    { label: 'UCI Adulto', icon: 'fa-solid fa-heart-pulse', bg: '#eff6ff', text: '#2563eb', value: '92%', sub: '2 disponibles de 24', hasBar: true, barWidth: '92%' },
+    { label: 'UTI Adulto', icon: 'fa-solid fa-lungs', bg: '#eef2ff', text: '#4f46e5', value: '85%', sub: '3 disponibles de 20', hasBar: true, barWidth: '85%' },
+    { label: 'UCI Pediatría', icon: 'fa-solid fa-child-reaching', bg: '#ecfdf5', text: '#059669', value: '70%', sub: '3 disponibles de 10', hasBar: true, barWidth: '70%' },
+    { label: 'UTI Pediatría', icon: 'fa-solid fa-baby', bg: '#f5f3ff', text: '#7c3aed', value: '60%', sub: '4 disponibles de 10', hasBar: true, barWidth: '60%' },
+    { label: 'Casos HEC / HUAP activos', icon: 'fa-solid fa-truck-medical', bg: '#fff1f2', text: '#e11d48', value: '14', sub: '3 en traslado', hasBar: false, barWidth: '0%' },
+    { label: 'Derivaciones Macrorred', icon: 'fa-solid fa-network-wired', bg: '#f0f9ff', text: '#0284c7', value: '21', sub: '4 en espera', hasBar: false, barWidth: '0%' },
+  ];
+
+  patientsByEstado = {
+    'En revisión por referente': [
+      { tipo: 'HEC', apertura: '02-08-2026', nombre: 'Juana Pérez Soto', sexo: 'F', rut: '12.345.678-9', edad: '54', comuna: 'Santiago', diagnostico: 'IAM Killip II', especialidad: 'Cardiología', centroOrigen: 'HSBA', servicioDestino: 'UCI Adulto', estado: 'En revisión por referente', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 09:10', observaciones: 'Pendiente validación de referente' },
+      { tipo: 'HUAP', apertura: '03-08-2026', nombre: 'Manuel Rojas Díaz', sexo: 'M', rut: '9.876.543-2', edad: '61', comuna: 'Estación Central', diagnostico: 'ACV isquémico', especialidad: 'Neurología', centroOrigen: 'HSBA', servicioDestino: 'UTI Adulto', estado: 'En revisión por referente', equipoGestor: 'Equipo B', actualizacion: '08-08-2026 08:40', observaciones: '' },
+    ],
+    'En espera de cupo': [
+      { tipo: 'HEC', apertura: '01-08-2026', nombre: 'Carla Muñoz Vera', sexo: 'F', rut: '15.222.333-4', edad: '38', comuna: 'Pedro Aguirre Cerda', diagnostico: 'Neumonía grave', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'UCI Adulto', estado: 'En espera de cupo', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 07:55', observaciones: 'Sin camas disponibles en red' },
+      { tipo: 'HUAP', apertura: '04-08-2026', nombre: 'Iván Contreras Sáez', sexo: 'M', rut: '11.111.111-1', edad: '29', comuna: 'Maipú', diagnostico: 'Politraumatismo', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'UTI Adulto', estado: 'En espera de cupo', equipoGestor: 'Equipo C', actualizacion: '08-08-2026 07:20', observaciones: '' },
+    ],
+    'En traslado': [
+      { tipo: 'HEC', apertura: '05-08-2026', nombre: 'Pedro Salinas Toro', sexo: 'M', rut: '13.456.789-0', edad: '45', comuna: 'Cerrillos', diagnostico: 'Shock séptico', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'HUAP', estado: 'En traslado', equipoGestor: 'Equipo B', actualizacion: '08-08-2026 10:05', observaciones: 'Ambulancia en camino' },
+      { tipo: 'HUAP', apertura: '05-08-2026', nombre: 'Ximena Bravo Ortiz', sexo: 'F', rut: '16.234.567-8', edad: '52', comuna: 'La Cisterna', diagnostico: 'Insuficiencia respiratoria', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'HEC', estado: 'En traslado', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 09:50', observaciones: '' },
+    ],
+    'Exitoso': [
+      { tipo: 'HEC', apertura: '30-07-2026', nombre: 'Ana Torres López', sexo: 'F', rut: '10.222.111-5', edad: '33', comuna: 'Santiago', diagnostico: 'Preeclampsia severa', especialidad: 'Obstetricia', centroOrigen: 'HSBA', servicioDestino: 'UCI Adulto', estado: 'Exitoso', equipoGestor: 'Equipo A', actualizacion: '07-08-2026 22:00', observaciones: 'Cupo confirmado' },
+      { tipo: 'HUAP', apertura: '29-07-2026', nombre: 'Roberto Sáez Lagos', sexo: 'M', rut: '17.345.678-9', edad: '58', comuna: 'San Joaquín', diagnostico: 'Pancreatitis aguda', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'UTI Adulto', estado: 'Exitoso', equipoGestor: 'Equipo B', actualizacion: '07-08-2026 20:15', observaciones: '' },
+    ],
+    'Rechazado': [
+      { tipo: 'HEC', apertura: '29-07-2026', nombre: 'Luis Fuentes Cea', sexo: 'M', rut: '8.765.432-1', edad: '70', comuna: 'Lo Espejo', diagnostico: 'EPOC descompensado', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'UTI Adulto', estado: 'Rechazado', equipoGestor: 'Equipo C', actualizacion: '07-08-2026 19:30', observaciones: 'Rechazado por criterio clínico' },
+    ],
+    'Desestimado': [
+      { tipo: 'HEC', apertura: '28-07-2026', nombre: 'Marcela Vidal Paz', sexo: 'F', rut: '14.987.654-3', edad: '26', comuna: 'San Miguel', diagnostico: 'Apendicitis', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'UCI Pediatría', estado: 'Desestimado', equipoGestor: 'Equipo A', actualizacion: '07-08-2026 15:10', observaciones: 'Resuelto en centro de origen' },
+      { tipo: 'HUAP', apertura: '27-07-2026', nombre: 'Daniela Soto Reyes', sexo: 'F', rut: '18.456.789-0', edad: '41', comuna: 'Ñuñoa', diagnostico: 'Colecistitis aguda', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: '—', estado: 'Desestimado', equipoGestor: 'Equipo C', actualizacion: '07-08-2026 13:40', observaciones: '' },
+    ],
+    'Fallece': [
+      { tipo: 'HUAP', apertura: '27-07-2026', nombre: 'Reservado', sexo: 'OTRO', rut: '—', edad: '82', comuna: 'Santiago', diagnostico: 'Falla multiorgánica', especialidad: 'UCI', centroOrigen: 'HSBA', servicioDestino: '—', estado: 'Fallece', equipoGestor: 'Equipo B', actualizacion: '07-08-2026 12:00', observaciones: '' },
+    ],
+  };
+  hecColors = { 'En revisión por referente': '#0ea5e9', 'En espera de cupo': '#f59e0b', 'En traslado': '#e11d48', 'Exitoso': '#059669', 'Rechazado': '#64748b', 'Desestimado': '#7c3aed', 'Fallece': '#111827' };
+
+  patientsByEstadoMacro = {
+    'En revisión por referente': [
+      { tipo: 'MACRO', apertura: '02-08-2026', nombre: 'Felipe Aravena Muñoz', sexo: 'M', rut: '12.987.654-3', edad: '47', comuna: 'Recoleta', diagnostico: 'Insuficiencia renal', especialidad: 'Nefrología', centroOrigen: 'HSBA', servicioDestino: 'Red Norte', estado: 'En revisión por referente', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 09:30', observaciones: '' },
+      { tipo: 'PRIVADO', apertura: '03-08-2026', nombre: 'Sofía Herrera Cid', sexo: 'F', rut: '13.876.543-2', edad: '39', comuna: 'Providencia', diagnostico: 'Fractura expuesta', especialidad: 'Traumatología', centroOrigen: 'HSBA', servicioDestino: 'Clínica convenio', estado: 'En revisión por referente', equipoGestor: 'Equipo B', actualizacion: '08-08-2026 08:50', observaciones: '' },
+    ],
+    'En espera de cupo': [
+      { tipo: 'MACRO', apertura: '01-08-2026', nombre: 'Ricardo Peña Flores', sexo: 'M', rut: '14.765.432-1', edad: '56', comuna: 'Independencia', diagnostico: 'Neumonía', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'Red Sur', estado: 'En espera de cupo', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 07:40', observaciones: 'Sin cupo disponible' },
+      { tipo: 'PRIVADO', apertura: '04-08-2026', nombre: 'Constanza Leiva Meza', sexo: 'F', rut: '15.654.321-0', edad: '31', comuna: 'Ñuñoa', diagnostico: 'Apendicitis', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'Clínica convenio', estado: 'En espera de cupo', equipoGestor: 'Equipo C', actualizacion: '08-08-2026 07:10', observaciones: '' },
+    ],
+    'En traslado': [
+      { tipo: 'MACRO', apertura: '05-08-2026', nombre: 'Jorge Campos Vera', sexo: 'M', rut: '16.543.210-9', edad: '63', comuna: 'Quinta Normal', diagnostico: 'ACV hemorrágico', especialidad: 'Neurología', centroOrigen: 'HSBA', servicioDestino: 'Red Norte', estado: 'En traslado', equipoGestor: 'Equipo B', actualizacion: '08-08-2026 10:15', observaciones: 'Traslado en curso' },
+      { tipo: 'PRIVADO', apertura: '05-08-2026', nombre: 'Valentina Rojas Ibáñez', sexo: 'F', rut: '17.432.109-8', edad: '28', comuna: 'Las Condes', diagnostico: 'Embarazo de alto riesgo', especialidad: 'Obstetricia', centroOrigen: 'HSBA', servicioDestino: 'Clínica convenio', estado: 'En traslado', equipoGestor: 'Equipo A', actualizacion: '08-08-2026 09:20', observaciones: '' },
+    ],
+    'Exitoso': [
+      { tipo: 'MACRO', apertura: '30-07-2026', nombre: 'Camila Vergara Soto', sexo: 'F', rut: '18.321.098-7', edad: '45', comuna: 'Renca', diagnostico: 'Colecistitis', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'Red Sur', estado: 'Exitoso', equipoGestor: 'Equipo A', actualizacion: '07-08-2026 21:30', observaciones: 'Cupo confirmado' },
+      { tipo: 'PRIVADO', apertura: '29-07-2026', nombre: 'Matías Ortega Paredes', sexo: 'M', rut: '19.210.987-6', edad: '52', comuna: 'Vitacura', diagnostico: 'Hernia complicada', especialidad: 'Cirugía', centroOrigen: 'HSBA', servicioDestino: 'Clínica convenio', estado: 'Exitoso', equipoGestor: 'Equipo B', actualizacion: '07-08-2026 19:45', observaciones: '' },
+    ],
+    'Rechazado': [
+      { tipo: 'MACRO', apertura: '28-07-2026', nombre: 'Patricia Núñez Silva', sexo: 'F', rut: '20.109.876-5', edad: '67', comuna: 'Conchalí', diagnostico: 'EPOC', especialidad: 'Medicina Interna', centroOrigen: 'HSBA', servicioDestino: 'Red Norte', estado: 'Rechazado', equipoGestor: 'Equipo C', actualizacion: '07-08-2026 17:00', observaciones: 'Rechazado por criterio clínico' },
+    ],
+    'Desestimado': [
+      { tipo: 'PRIVADO', apertura: '27-07-2026', nombre: 'Diego Vásquez Ramos', sexo: 'M', rut: '21.098.765-4', edad: '35', comuna: 'La Reina', diagnostico: 'Cálculo renal', especialidad: 'Urología', centroOrigen: 'HSBA', servicioDestino: '—', estado: 'Desestimado', equipoGestor: 'Equipo A', actualizacion: '07-08-2026 14:20', observaciones: 'Resuelto en centro de origen' },
+    ],
+    'Fallece': [],
+  };
+
+  patientsCdt = [
+    { fecha: '05-08-2026', nombrePaciente: 'Ana Belmar Rojas', ficha: '45231', rut: '12.111.222-3', diagnostico: 'Colelitiasis', tipoSolicitud: 'Cirugía', carpeta: 'Luis Barraza', hospitalizado: 'Sí', especialidad: 'Cirugía' },
+    { fecha: '05-08-2026', nombrePaciente: 'Tomás Reyes Contreras', ficha: '45890', rut: '13.222.333-4', diagnostico: 'Neumonía', tipoSolicitud: 'Medicina', carpeta: 'Gestores', hospitalizado: 'Sí', especialidad: 'Medicina Interna' },
+    { fecha: '04-08-2026', nombrePaciente: 'Loreto Campos Díaz', ficha: '44120', rut: '14.333.444-5', diagnostico: 'Hernia inguinal', tipoSolicitud: 'Cirugía', carpeta: 'Luis Barraza', hospitalizado: 'No', especialidad: 'Cirugía' },
+    { fecha: '04-08-2026', nombrePaciente: 'Simón Vidal Toro', ficha: '43980', rut: '15.444.555-6', diagnostico: 'Bronquiolitis', tipoSolicitud: 'Medicina', carpeta: 'Gestores', hospitalizado: 'Sí', especialidad: 'Pediatría' },
+    { fecha: '03-08-2026', nombrePaciente: 'Fernanda Ruiz Peña', ficha: '43870', rut: '16.555.666-7', diagnostico: 'Embarazo ectópico', tipoSolicitud: 'Cirugía', carpeta: 'Gestores', hospitalizado: 'Sí', especialidad: 'Ginecología' },
+    { fecha: '03-08-2026', nombrePaciente: 'Cristóbal Ponce Lira', ficha: '43650', rut: '17.666.777-8', diagnostico: 'Diabetes descompensada', tipoSolicitud: 'Medicina', carpeta: 'Luis Barraza', hospitalizado: 'No', especialidad: 'Medicina Interna' },
+    { fecha: '02-08-2026', nombrePaciente: 'Javiera Molina Bravo', ficha: '43500', rut: '18.777.888-9', diagnostico: 'Apendicitis', tipoSolicitud: 'Cirugía', carpeta: 'Luis Barraza', hospitalizado: 'Sí', especialidad: 'Cirugía' },
+    { fecha: '02-08-2026', nombrePaciente: 'Benjamín Soto Araya', ficha: '43210', rut: '19.888.999-0', diagnostico: 'Neumonía pediátrica', tipoSolicitud: 'Medicina', carpeta: 'Gestores', hospitalizado: 'Sí', especialidad: 'Pediatría' },
+  ];
+  cdtColors = { 'Cirugía': '#d97706', 'Medicina Interna': '#0284c7', 'Pediatría': '#059669', 'Ginecología': '#e11d48', 'Medicina': '#0284c7', 'Luis Barraza': '#7c3aed', 'Gestores': '#f59e0b' };
+
+  buildCdtSection(label, categoryField, categoriesArr, selected, onPick) {
+    const total = categoriesArr.reduce((sum, c) => sum + c.count, 0);
+    let acc = 0;
+    const pieLegend = categoriesArr.map((c) => {
+      const pct = total ? (c.count / total * 100) : 0;
+      const color = this.cdtColors[c.estado] || '#94a3b8';
+      const seg = { label: c.estado, value: c.count, color, from: acc, to: acc + pct };
+      acc += pct;
+      return seg;
+    });
+    const pieGradient = 'conic-gradient(' + pieLegend.map((seg) => seg.color + ' ' + seg.from.toFixed(1) + '% ' + seg.to.toFixed(1) + '%').join(', ') + ')';
+    const rows = categoriesArr.map((c) => ({
+      estado: c.estado, count: c.count,
+      rowStyle: 'cursor:pointer' + (selected === c.estado ? ';background:#fef2f2' : ''),
+      onSelect: () => onPick(c.estado),
+    }));
+    const patients = selected ? this.patientsCdt.filter((p) => p[categoryField] === selected) : [];
+    return { label, rows, pieGradient, pieLegend, selectedEstado: selected, patients, closePatients: () => onPick(null) };
+  }
+
+  submitLogin = (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ view: 'dash' }); };
+  logout = () => this.setState({ view: 'login', sel: null, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null });
+  toggleSelect = (id) => this.setState((s) => ({ sel: s.sel === id ? null : id, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null }));
+
+  buildHecSection(label, tipoKey, estadosArr, selected, onPick, patientsMap) {
+    const total = estadosArr.reduce((sum, e) => sum + e.count, 0);
+    let acc = 0;
+    const pieLegend = estadosArr.map((e) => {
+      const pct = total ? (e.count / total * 100) : 0;
+      const color = this.hecColors[e.estado] || '#94a3b8';
+      const seg = { label: e.estado, value: e.count, color, from: acc, to: acc + pct };
+      acc += pct;
+      return seg;
+    });
+    const pieGradient = 'conic-gradient(' + pieLegend.map((seg) => seg.color + ' ' + seg.from.toFixed(1) + '% ' + seg.to.toFixed(1) + '%').join(', ') + ')';
+    const rows = estadosArr.map((e) => ({
+      estado: e.estado, count: e.count,
+      rowStyle: 'cursor:pointer' + (selected === e.estado ? ';background:#fef2f2' : ''),
+      onSelect: () => onPick(e.estado),
+    }));
+    const patients = selected ? ((patientsMap || this.patientsByEstado)[selected] || []).filter((p) => p.tipo === tipoKey) : [];
+    return { label, rows, pieGradient, pieLegend, selectedEstado: selected, patients, closePatients: () => onPick(null) };
+  }
+
+  // =========================================================
+  // CARGA DE DATOS REALES desde Google Sheets (reemplaza los
+  // valores de ejemplo apenas terminan de cargar). Si algo falla
+  // (planilla privada, sin internet, etc.) simplemente se quedan
+  // los valores de ejemplo -- nunca rompe la pantalla.
+  // =========================================================
+  async gviz_cell(spreadsheetId, sheetName, cellRef) {
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${cellRef}`;
+      const res = await fetch(url);
+      const text = await res.text();
+      const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+      const cell = json.table?.rows?.[0]?.c?.[0];
+      const val = cell ? Number(cell.v ?? cell.f) : NaN;
+      return isNaN(val) ? null : val;
+    } catch (e) { console.warn('gviz_cell error', e); return null; }
+  }
+
+  async gviz_hoja(spreadsheetId, sheetName, gid) {
+    try {
+      const q = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(sheetName || '')}`;
+      const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&${q}&headers=1`;
+      const res = await fetch(url);
+      const text = await res.text();
+      const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+      if (!json.table) return { headers: [], rows: [] };
+      const headers = (json.table.cols || []).map((c) => c.label || '');
+      const rows = (json.table.rows || []).map((r) => (r.c || []).map((c) => (c ? (c.v ?? c.f ?? '') : '')));
+      return { headers, rows };
+    } catch (e) { console.warn('gviz_hoja error', e); return { headers: [], rows: [] }; }
+  }
+
+  col(headers, patron) {
+    return headers.findIndex((h) => patron.test(String(h || '').toLowerCase()));
+  }
+
+  async componentDidMount() {
+    try { await this.cargarDatosReales(); }
+    catch (e) { console.warn('No se pudieron cargar datos reales, se mantienen los de ejemplo.', e); }
+  }
+
+  async cargarDatosReales() {
+    await Promise.all([
+      this.cargarCamasCriticasReal(),
+      this.cargarHecHuapReal(),
+      this.cargarCdtReal(),
+    ]);
+    this.setState({}); // fuerza el re-render con los datos ya actualizados
+  }
+
+  // --- 1) Camas críticas (UCI/UTI Adulto, UCIP/UTIP Pediatría) desde "INFORME DE TURNO" ---
+  async cargarCamasCriticasReal() {
+    const celdas = {
+      uciAd:  { sheet: 'adulto',    total: 'D49', ocup: 'D50', label: 'UCI Adulto' },
+      utiAd:  { sheet: 'adulto',    total: 'E49', ocup: 'E50', label: 'UTI Adulto' },
+      ucipPe: { sheet: 'PEDIATRIA', total: 'D55', ocup: 'D56', label: 'UCI Pediatría' },
+      utipPe: { sheet: 'PEDIATRIA', total: 'E55', ocup: 'E56', label: 'UTI Pediatría' },
+    };
+    const claves = Object.keys(celdas);
+    const camas = {};
+    for (const key of claves) {
+      const c = celdas[key];
+      const [total, ocup] = await Promise.all([
+        this.gviz_cell(this.INFORME_TURNO_ID, c.sheet, c.total),
+        this.gviz_cell(this.INFORME_TURNO_ID, c.sheet, c.ocup),
+      ]);
+      camas[key] = { total, ocup, label: c.label };
+    }
+
+    const pct = (o, t) => (t && o != null) ? Math.round((o / t) * 100) : null;
+    const disp = (o, t) => (t != null && o != null) ? Math.max(t - o, 0) : null;
+
+    claves.forEach((key, i) => {
+      const c = camas[key];
+      if (c.total == null) return; // no cargó -> se mantiene el valor de ejemplo
+      const p = pct(c.ocup, c.total);
+
+      // Barra de KPIs globales (arriba del dashboard)
+      const gk = this.globalKpis[i];
+      if (gk) {
+        gk.value = p != null ? `${p}%` : '—';
+        gk.sub = c.ocup != null ? `${disp(c.ocup, c.total)} disponibles de ${c.total}` : `${c.total} camas totales`;
+        gk.barWidth = p != null ? `${p}%` : '0%';
+      }
+
+      // Tarjeta del módulo "Novedades 2026 (Camas)"
+      const camasMod = this.modulesData.find((m) => m.id === 'camas');
+      if (camasMod && camasMod.kpis[i]) {
+        camasMod.kpis[i].value = p != null ? `${p}%` : '—';
+        camasMod.kpis[i].sub = c.ocup != null ? `${disp(c.ocup, c.total)} disponibles de ${c.total}` : '';
+        camasMod.rows[i] = {
+          r1: c.label, r2: String(c.total),
+          r3: c.ocup != null ? String(c.ocup) : '—',
+          r4: c.ocup != null ? String(disp(c.ocup, c.total)) : '—',
+        };
+      }
+    });
+  }
+
+  // --- 2) HEC y HUAP desde "REGISTRO CASOS HEC Y HUAP" (agrupado por columna "Estado") ---
+  async cargarHecHuapReal() {
+    const hecMod = this.modulesData.find((m) => m.id === 'hec');
+    if (!hecMod) return;
+
+    const [hecData, huapData] = await Promise.all([
+      this.gviz_hoja(this.HECHUAP_ID, null, this.HECHUAP_GIDS.hec),
+      this.gviz_hoja(this.HECHUAP_ID, null, this.HECHUAP_GIDS.huap),
+    ]);
+
+    const procesar = (data, tipo) => {
+      if (!data.rows.length) return { estadosArr: [], pacientes: {} };
+      const idx = {
+        estado: this.col(data.headers, /estado/),
+        apertura: this.col(data.headers, /apertura|fecha/),
+        nombre: this.col(data.headers, /nombre/),
+        sexo: this.col(data.headers, /sexo/),
+        rut: this.col(data.headers, /rut/),
+        edad: this.col(data.headers, /edad/),
+        comuna: this.col(data.headers, /comuna/),
+        diagnostico: this.col(data.headers, /diagn/),
+        especialidad: this.col(data.headers, /especialidad/),
+        origen: this.col(data.headers, /origen/),
+        destino: this.col(data.headers, /destino/),
+        equipo: this.col(data.headers, /equipo/),
+        actualiza: this.col(data.headers, /actualiza/),
+        obs: this.col(data.headers, /observac/),
+      };
+      const conteo = {};
+      const pacientes = {};
+      const val = (f, i) => (i >= 0 ? (f[i] ?? '') : '');
+      data.rows.forEach((f) => {
+        if (!f.some((v) => String(v ?? '').trim() !== '')) return;
+        const estado = String(val(f, idx.estado)).trim();
+        if (!estado) return;
+        conteo[estado] = (conteo[estado] || 0) + 1;
+        (pacientes[estado] = pacientes[estado] || []).push({
+          tipo, apertura: val(f, idx.apertura), nombre: val(f, idx.nombre), sexo: val(f, idx.sexo),
+          rut: val(f, idx.rut), edad: val(f, idx.edad), comuna: val(f, idx.comuna),
+          diagnostico: val(f, idx.diagnostico), especialidad: val(f, idx.especialidad),
+          centroOrigen: val(f, idx.origen), servicioDestino: val(f, idx.destino), estado,
+          equipoGestor: val(f, idx.equipo), actualizacion: val(f, idx.actualiza), observaciones: val(f, idx.obs),
+        });
+      });
+      return { estadosArr: Object.keys(conteo).map((e) => ({ estado: e, count: conteo[e] })), pacientes };
+    };
+
+    const hecProc = procesar(hecData, 'HEC');
+    const huapProc = procesar(huapData, 'HUAP');
+
+    if (hecProc.estadosArr.length) hecMod.hecEstados = hecProc.estadosArr;
+    if (huapProc.estadosArr.length) hecMod.huapEstados = huapProc.estadosArr;
+
+    if (hecProc.estadosArr.length || huapProc.estadosArr.length) {
+      const combinado = {};
+      [hecProc.pacientes, huapProc.pacientes].forEach((mapa) => {
+        Object.keys(mapa).forEach((estado) => {
+          combinado[estado] = (combinado[estado] || []).concat(mapa[estado]);
+        });
+      });
+      this.patientsByEstado = combinado;
+
+      const contar = (arr, nombre) => (arr.find((e) => e.estado === nombre) || {}).count || 0;
+      hecMod.kpis[0].value = String(contar(hecProc.estadosArr, 'En espera de cupo'));
+      hecMod.kpis[1].value = String(contar(hecProc.estadosArr, 'En traslado'));
+      hecMod.kpis[2].value = String(contar(huapProc.estadosArr, 'En espera de cupo'));
+      hecMod.kpis[3].value = String(contar(huapProc.estadosArr, 'En traslado'));
+
+      const totalActivos = hecProc.estadosArr.reduce((s, e) => s + e.count, 0) + huapProc.estadosArr.reduce((s, e) => s + e.count, 0);
+      const totalTraslado = contar(hecProc.estadosArr, 'En traslado') + contar(huapProc.estadosArr, 'En traslado');
+      const gk = this.globalKpis.find((k) => /HEC/.test(k.label));
+      if (gk) { gk.value = String(totalActivos); gk.sub = `${totalTraslado} en traslado`; }
+    }
+  }
+
+  // --- 3) Solicitudes CDT desde "SOLICITUDES CDT" (pestaña ORDENES) ---
+  async cargarCdtReal() {
+    const cdtMod = this.modulesData.find((m) => m.id === 'cdt');
+    if (!cdtMod) return;
+
+    const data = await this.gviz_hoja(this.CDT_ID, this.CDT_SHEET, null);
+    const filasConDatos = data.rows.filter((f) => f.some((v) => String(v ?? '').trim() !== ''));
+    if (filasConDatos.length === 0) return;
+
+    // KPI superior: total de solicitudes registradas en la planilla real.
+    // (Las otras 3 tarjetas -- Aprobadas hoy / Rechazadas hoy / Tiempo
+    // promedio -- se dejan de ejemplo porque dependen de columnas de
+    // fecha/estado que aún no confirmamos con exactitud en esta planilla.)
+    cdtMod.kpis[0].value = String(filasConDatos.length);
+    cdtMod.kpis[0].sub = 'Registros totales en la planilla';
+  }
+
+  renderVals() {
+    const s = this.state;
+    const data = this.modulesData;
+    let detail = data.find((m) => m.id === s.sel) || null;
+    if (detail) detail = { ...detail, showGenericTable: detail.id !== 'hec' && detail.id !== 'macro' && detail.id !== 'cdt' };
+
+    if (detail && detail.id === 'hec') {
+      const pickHec = (v) => this.setState((st) => ({ hecEstado: st.hecEstado === v ? null : v }));
+      const pickHuap = (v) => this.setState((st) => ({ huapEstado: st.huapEstado === v ? null : v }));
+      const sections = [
+        this.buildHecSection('HEC — Resumen', 'HEC', detail.hecEstados, s.hecEstado, pickHec, this.patientsByEstado),
+        this.buildHecSection('HUAP — Resumen', 'HUAP', detail.huapEstados, s.huapEstado, pickHuap, this.patientsByEstado),
+      ];
+      detail = { ...detail, isHec: true, sections };
+    }
+
+    if (detail && detail.id === 'macro') {
+      const pickMacro = (v) => this.setState((st) => ({ macroEstado: st.macroEstado === v ? null : v }));
+      const pickPrivado = (v) => this.setState((st) => ({ privadoEstado: st.privadoEstado === v ? null : v }));
+      const sections = [
+        this.buildHecSection('Macrorred pública — Resumen', 'MACRO', detail.macroEstados, s.macroEstado, pickMacro, this.patientsByEstadoMacro),
+        this.buildHecSection('Privados / Convenio — Resumen', 'PRIVADO', detail.privadosEstados, s.privadoEstado, pickPrivado, this.patientsByEstadoMacro),
+      ];
+      detail = { ...detail, isHec: true, sections };
+    }
+
+    if (detail && detail.id === 'cdt') {
+      const pickPend = (v) => this.setState((st) => ({ cdtPendEstado: st.cdtPendEstado === v ? null : v }));
+      const pickTipo = (v) => this.setState((st) => ({ cdtTipoEstado: st.cdtTipoEstado === v ? null : v }));
+      const pickCarpeta = (v) => this.setState((st) => ({ cdtCarpetaEstado: st.cdtCarpetaEstado === v ? null : v }));
+      const cdtSections = [
+        this.buildCdtSection('Solicitudes pendientes — por especialidad', 'especialidad', detail.pendientesEsp, s.cdtPendEstado, pickPend),
+        this.buildCdtSection('Tipo de solicitud', 'tipoSolicitud', detail.tiposSolicitud, s.cdtTipoEstado, pickTipo),
+        this.buildCdtSection('Carpeta', 'carpeta', detail.carpetas, s.cdtCarpetaEstado, pickCarpeta),
+      ];
+      detail = { ...detail, isCdt: true, cdtSections };
+    }
+
+    const modules = data.map((m) => {
+      const active = s.sel === m.id;
+      return {
+        ...m,
+        navStyle: 'padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;background:transparent;color:#64748b;border:1px solid transparent;white-space:nowrap',
+        cardStyle: 'text-align:left;background:#fff;border:1px solid ' + (active ? m.text : '#e2e8f0') + ';border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,0.04);width:100%',
+        buttonLabel: active ? 'Ocultar resumen' : 'Ver resumen',
+        onSelect: () => this.toggleSelect(m.id),
+      };
+    });
+
+    return {
+      isLogin: s.view === 'login', isDash: s.view === 'dash',
+      submitLogin: this.submitLogin, enterGuest: () => this.setState({ view: 'dash' }), logout: this.logout,
+      globalKpis: this.globalKpis, modules, hasDetail: !!detail, detail, closeDetail: () => this.setState({ sel: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>
 

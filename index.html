@@ -2229,7 +2229,7 @@
             if (!cont) return;
             cont.innerHTML = '<p class="text-slate-400 text-xs p-3">Cargando...</p>';
             try {
-                const filas = await leerRangoGviz(sheet, rango);
+                const filas = await leerRangoGvizInforme(sheet, rango);
                 const letraBase = letraColumnaDesdeRango(rango);
                 const numCols = filas[0]?.length || 0;
 
@@ -2309,17 +2309,29 @@
 
         // Descarga un rango rectangular de una pestaña. Prioriza la API
         // oficial (si el usuario conectó Google) y cae al método público.
-        async function leerRangoGviz(sheetName, rango) {
-            const oficial = await leerConAPIOficial(NOVEDADES_SPREADSHEET_ID, sheetName, rango);
+        // Descarga un rango de una pestaña de un spreadsheet específico
+        // (prioriza la API oficial si el usuario conectó Google).
+        async function leerRangoGvizDe(spreadsheetId, sheetName, rango) {
+            const oficial = await leerConAPIOficial(spreadsheetId, sheetName, rango);
             if (oficial) return oficial;
 
-            const url = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/gviz/tq`
+            const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`
                 + `?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${rango}`;
             const res = await fetch(url);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
             if (!json.table || !json.table.rows) return [];
             return json.table.rows.map(r => (r.c || []).map(cell => formatearValorCelda(cell ? (cell.v ?? cell.f ?? '') : '')));
+        }
+
+        // Rango de "NOVEDADES ADULTO Y PEDIATRÍA 2026" (Solicitudes, Residentes en Turno, etc.)
+        async function leerRangoGviz(sheetName, rango) {
+            return leerRangoGvizDe(NOVEDADES_SPREADSHEET_ID, sheetName, rango);
+        }
+
+        // Rango de "INFORME DE TURNO" (Camas por Tipo, Bloques Qx/Médico, etc.)
+        async function leerRangoGvizInforme(sheetName, rango) {
+            return leerRangoGvizDe(INFORME_TURNO_SPREADSHEET_ID, sheetName, rango);
         }
 
         // Palabras típicas de encabezado: si una fila las trae en la 1ª o 2ª

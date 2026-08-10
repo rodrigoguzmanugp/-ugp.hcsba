@@ -55,32 +55,7 @@
 
 <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
   <div>
-    <div style="position:sticky;top:0;z-index:20">
-    <header style="background:#0f172a;color:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:42px;height:42px;border-radius:10px;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">UGP</div>
-        <div>
-          <h1 style="margin:0;font-size:18px;font-weight:800">Sistema de Gestión de Camas Hospitalarias</h1>
-          <p style="margin:0;font-size:12px;color:#94a3b8">Hospital San Borja Arriarán · Red Asistencial 2026</p>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px 14px;font-size:13px;color:#cbd5e1"><i class="fa-regular fa-clock" style="margin-right:6px;color:#60a5fa"></i>08-08-2026</div>
-        <button type="button" style="background:#059669;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px"><i class="fa-solid fa-file-excel" style="margin-right:6px"></i>Abrir Google Sheet</button>
-        <button type="button" style="background:#d97706;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px"><i class="fa-solid fa-scissors" style="margin-right:6px"></i>Solicitud Pabellón</button>
-        <button type="button" onclick="{{ logout }}" style="background:#1e293b;border:1px solid #334155;color:#fff;border-radius:10px;width:36px;height:36px"><i class="fa-solid fa-right-from-bracket"></i></button>
-      </div>
-    </header>
-
-    <nav style="background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 32px;display:flex;gap:8px;overflow-x:auto">
-      <div style="padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;white-space:nowrap"><i class="fa-solid fa-house" style="margin-right:6px"></i>Inicio / Dashboard</div>
-      <sc-for list="{{ modules }}" as="mod" hint-placeholder-count="5">
-        <button type="button" onclick="{{ mod.onSelect }}" style="{{ mod.navStyle }}"><i class="{{ mod.icon }}" style="margin-right:6px"></i>{{ mod.name }}</button>
-      </sc-for>
-    </nav>
-    </div>
-
-    <main style="max-width:1280px;margin:0 auto;padding:28px 32px 56px">
+    <main style="max-width:1280px;margin:0 auto;padding:12px 16px 32px">
       <div style="margin-bottom:22px">
         <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#94a3b8;margin:0 0 4px">Resumen operativo · Adulto y Pediatría</p>
         <h2 style="margin:0 0 6px;font-size:24px;font-weight:800;color:#0f172a">Ocupación hospitalaria en tiempo real</h2>
@@ -340,7 +315,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { view: 'login', sel: null };
+  state = { view: 'dash', sel: null };
 
   // --- Conexión a Google Sheets reales (mismos archivos que usa el sistema principal) ---
   INFORME_TURNO_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0'; // "INFORME DE TURNO"

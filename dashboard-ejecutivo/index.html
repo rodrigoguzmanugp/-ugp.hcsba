@@ -227,6 +227,50 @@
               </div>
             </sc-if>
 
+            <sc-if value="{{ detail.isInforme }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:24px">
+                <sc-for list="{{ detail.matrices }}" as="mtx" hint-placeholder-count="5">
+                  <div style="min-width:0">
+                    <p style="margin:0 0 8px;font-weight:800;color:#0f172a;font-size:14px">{{ mtx.label }}</p>
+                    <div style="overflow-x:auto">
+                      <table style="width:100%;border-collapse:collapse;font-size:12px">
+                        <thead>
+                          <tr>
+                            <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc"></th>
+                            <sc-for list="{{ mtx.colLabels }}" as="col" hint-placeholder-count="4">
+                              <th style="text-align:center;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap">{{ col }}</th>
+                            </sc-for>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <sc-for list="{{ mtx.rows }}" as="row" hint-placeholder-count="6">
+                            <tr>
+                              <td style="padding:6px 8px;font-weight:600;white-space:nowrap;border-bottom:1px solid #f1f5f9;background:#f8fafc">{{ row.label }}</td>
+                              <sc-for list="{{ row.values }}" as="val" hint-placeholder-count="4">
+                                <td style="padding:6px 8px;text-align:center;border-bottom:1px solid #f1f5f9">{{ val }}</td>
+                              </sc-for>
+                            </tr>
+                          </sc-for>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </sc-for>
+
+                <div>
+                  <p style="margin:0 0 10px;font-weight:800;color:#0f172a;font-size:15px">🚨 Emergencia Hospitalaria &amp; % Ocupación</p>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                    <sc-for list="{{ detail.emergenciaKpis }}" as="kpi" hint-placeholder-count="7">
+                      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">
+                        <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700">{{ kpi.label }}</div>
+                        <div style="font-size:18px;font-weight:800;color:#0f172a;margin-top:2px">{{ kpi.value }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
             <sc-if value="{{ detail.isCdt }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:28px">
                 <sc-for list="{{ detail.cdtSections }}" as="sec" hint-placeholder-count="3">
@@ -581,6 +625,82 @@ class Component extends DCLogic {
     return headers.findIndex((h) => patron.test(String(h || '').toLowerCase()));
   }
 
+  async gviz_rango(spreadsheetId, sheetName, rango) {
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&range=${rango}`;
+      const res = await fetch(url);
+      const text = await res.text();
+      const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+      if (!json.table || !json.table.rows) return [];
+      return json.table.rows.map((r) => (r.c || []).map((c) => (c ? (c.v ?? c.f ?? '') : '')));
+    } catch (e) { console.warn('gviz_rango error', e); return []; }
+  }
+
+  // --- Camas por Tipo / Bloques Especiales / Emergencia / % Ocupación ---
+  // Mismas celdas configurables en "Config. Celdas" (solo Admin) del
+  // sistema principal -- si las mueven ahí, corrígelas también aquí.
+  async cargarMatricesInformeReal() {
+    const defsMatrices = [
+      { key: 'adulto_tipo', label: 'Adulto · Camas por Tipo', sheet: 'adulto', rango: 'A49:G52',
+        filas: ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'] },
+      { key: 'adulto_qx', label: 'Adulto · Altas Encuesta (Bloque Qx / Bloque Médico / UCI / UTI)', sheet: 'adulto', rango: 'I49:R52',
+        filas: ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'] },
+      { key: 'pedi_tipo', label: 'Pediatría · Camas por Tipo', sheet: 'PEDIATRIA', rango: 'A55:G60',
+        filas: ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'] },
+      { key: 'pedi_qx', label: 'Pediatría · Altas Encuesta (Bloque Qx / Bloque Médico / UCIP / UTIP)', sheet: 'PEDIATRIA', rango: 'K65:S68',
+        filas: ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'] },
+      { key: 'neo_tipo', label: 'Neonatología · Camas por Tipo', sheet: 'PEDIATRIA', rango: 'A66:G71',
+        filas: ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'] },
+    ];
+
+    const letraColumna = (letraBase, offset) => {
+      let num = 0;
+      for (const c of letraBase) num = num * 26 + (c.charCodeAt(0) - 64);
+      num += offset;
+      let resultado = '';
+      while (num > 0) {
+        const rem = (num - 1) % 26;
+        resultado = String.fromCharCode(65 + rem) + resultado;
+        num = Math.floor((num - 1) / 26);
+      }
+      return resultado;
+    };
+
+    const matrices = [];
+    for (const def of defsMatrices) {
+      const filas = await this.gviz_rango(this.INFORME_TURNO_ID, def.sheet, def.rango);
+      if (!filas.length) continue;
+      const letraBase = (def.rango.match(/^([A-Z]+)\d+/) || [, 'A'])[1];
+      const numCols = filas[0]?.length || 0;
+      const colLabels = [];
+      for (let c = 0; c < numCols; c++) colLabels.push(`Col ${letraColumna(letraBase, c)}`);
+      const rows = filas.map((f, i) => ({ label: def.filas[i] || `Fila ${i + 1}`, values: f.map((v) => (v === '' ? '—' : v)) }));
+      matrices.push({ label: def.label, colLabels, rows });
+    }
+    this.informeMatrices = matrices;
+
+    // Emergencia + % Ocupación (celdas sueltas)
+    const [atendidos, hospitalizados, respiratoria, ginecoAt, ginecoHosp, pctAd, pctPed] = await Promise.all([
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'S55'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'S56'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'S57'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'S60'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'S61'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'adulto', 'K54'),
+      this.gviz_cell(this.INFORME_TURNO_ID, 'PEDIATRIA', 'N70'),
+    ]);
+
+    this.informeEmergenciaKpis = [
+      { label: 'Total Atendidos (SEH)', value: atendidos != null ? String(atendidos) : '—' },
+      { label: 'Total Hospitalizados (SEH)', value: hospitalizados != null ? String(hospitalizados) : '—' },
+      { label: 'Consulta Respiratoria (SEH)', value: respiratoria != null ? String(respiratoria) : '—' },
+      { label: 'Urgencia Gineco · Atendidos', value: ginecoAt != null ? String(ginecoAt) : '—' },
+      { label: 'Urgencia Gineco · Hospitalizados', value: ginecoHosp != null ? String(ginecoHosp) : '—' },
+      { label: '% Ocupación Adultos', value: pctAd != null ? `${pctAd}%` : '—' },
+      { label: '% Ocupación Pediatría', value: pctPed != null ? `${pctPed}%` : '—' },
+    ];
+  }
+
   async componentDidMount() {
     try { await this.cargarDatosReales(); }
     catch (e) { console.warn('No se pudieron cargar datos reales, se mantienen los de ejemplo.', e); }
@@ -591,6 +711,7 @@ class Component extends DCLogic {
       this.cargarCamasCriticasReal(),
       this.cargarHecHuapReal(),
       this.cargarCdtReal(),
+      this.cargarMatricesInformeReal(),
     ]);
     this.setState({}); // fuerza el re-render con los datos ya actualizados
   }
@@ -776,7 +897,11 @@ class Component extends DCLogic {
     const s = this.state;
     const data = this.modulesData;
     let detail = data.find((m) => m.id === s.sel) || null;
-    if (detail) detail = { ...detail, showGenericTable: detail.id !== 'hec' && detail.id !== 'macro' && detail.id !== 'cdt' };
+    if (detail) detail = { ...detail, showGenericTable: detail.id !== 'hec' && detail.id !== 'macro' && detail.id !== 'cdt' && detail.id !== 'informe' };
+
+    if (detail && detail.id === 'informe') {
+      detail = { ...detail, isInforme: true, matrices: this.informeMatrices || [], emergenciaKpis: this.informeEmergenciaKpis || [] };
+    }
 
     if (detail && detail.id === 'hec') {
       const pickHec = (v) => this.setState((st) => ({ hecEstado: st.hecEstado === v ? null : v }));

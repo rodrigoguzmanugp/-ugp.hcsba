@@ -923,9 +923,82 @@
                     </div>
                 </div>
 
+                <!-- 3. Camas por Tipo y Bloques Especiales -->
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wide">3. Camas por Tipo y Bloques Especiales</h4>
+                    <button onclick="cargarMatricesInforme()" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
+                </div>
+                <p class="text-[10px] text-slate-400 -mt-2 mb-2">Cada tabla muestra la letra de columna real de tu planilla junto a la etiqueta esperada — si no calzan, ajusta el rango en "Config. Celdas" (solo Admin).</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 mb-1">Adulto · Camas por Tipo</p>
+                        <div id="matriz-adulto-camas-tipo" class="bg-white rounded-lg border border-slate-200 overflow-x-auto"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 mb-1">Adulto · Altas Encuesta Área Adulto (Bloque Qx / Bloque Médico / UCI / UTI)</p>
+                        <div id="matriz-adulto-qx-medico" class="bg-white rounded-lg border border-slate-200 overflow-x-auto"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 mb-1">Pediatría · Camas por Tipo</p>
+                        <div id="matriz-pedi-camas-tipo" class="bg-white rounded-lg border border-slate-200 overflow-x-auto"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 mb-1">Pediatría · Altas Encuesta Área Pediátrica (Bloque Qx / Bloque Médico / UCIP / UTIP)</p>
+                        <div id="matriz-pedi-qx-medico" class="bg-white rounded-lg border border-slate-200 overflow-x-auto"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 mb-1">Neonatología · Camas por Tipo</p>
+                        <div id="matriz-neo-camas-tipo" class="bg-white rounded-lg border border-slate-200 overflow-x-auto"></div>
+                    </div>
+                </div>
+
+                <!-- 4. Emergencia Hospitalaria -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide mt-2">4. 🚨 Consultas Servicios de Emergencia Hospitalaria</h4>
+                    <p class="text-[10px] text-slate-400 -mt-2 mb-2">Nota: los datos originales se confirman en plataforma UGCC.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-slate-500">N° Total Pacientes Atendidos</p>
+                            <p class="text-xl font-bold text-slate-900" id="emergencia-atendidos">—</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-slate-500">N° Total Pacientes Hospitalizados</p>
+                            <p class="text-xl font-bold text-slate-900" id="emergencia-hospitalizados">—</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-slate-500">N° Total Consulta Respiratoria</p>
+                            <p class="text-xl font-bold text-slate-900" id="emergencia-respiratoria">—</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-slate-500">Urgencia Gineco-Obstétrica · Atendidos</p>
+                            <p class="text-xl font-bold text-slate-900" id="gineco-atendidos">—</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-slate-500">Urgencia Gineco-Obstétrica · Hospitalizados</p>
+                            <p class="text-xl font-bold text-slate-900" id="gineco-hospitalizados">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. % Ocupación Total -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">5. % Ocupación Total</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs max-w-md">
+                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <p class="text-blue-700">% Ocupación Adultos</p>
+                            <p class="text-2xl font-bold text-blue-900" id="pct-ocupacion-adulto">—</p>
+                        </div>
+                        <div class="p-3 bg-teal-50 rounded-lg border border-teal-200">
+                            <p class="text-teal-700">% Ocupación Pediatría</p>
+                            <p class="text-2xl font-bold text-teal-900" id="pct-ocupacion-pedi">—</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Novedades de Turno -->
                 <div>
-                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">2. Novedades y Eventos Relevantes</h4>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">6. Novedades y Eventos Relevantes</h4>
                     <textarea class="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500" rows="6" placeholder="Ingrese aquí las novedades y eventos relevantes del turno..."></textarea>
                 </div>
             </div>
@@ -2127,6 +2200,101 @@
             }
         }
 
+        // ---------------------------------------------------------------
+        // MATRICES DE CAMAS (Informe de Turno): lee un rango completo tal
+        // cual está en la hoja y lo muestra en una tabla honesta -- con la
+        // LETRA DE COLUMNA REAL de tu planilla (B, C, D...) para que puedas
+        // comprobar tú mismo que calza con UCI/UTI/MEDIAS/BÁSICAS, etc.
+        // Si algún bloque no calza, ajusta el rango en "Config. Celdas".
+        // ---------------------------------------------------------------
+        function letraColumnaDesdeRango(rango) {
+            const m = rango.match(/^([A-Z]+)\d+/);
+            return m ? m[1] : 'A';
+        }
+        function letraColumna(letraBase, offset) {
+            let num = 0;
+            for (const c of letraBase) num = num * 26 + (c.charCodeAt(0) - 64);
+            num += offset;
+            let resultado = '';
+            while (num > 0) {
+                const rem = (num - 1) % 26;
+                resultado = String.fromCharCode(65 + rem) + resultado;
+                num = Math.floor((num - 1) / 26);
+            }
+            return resultado;
+        }
+
+        async function pintarMatrizCeldas(contenedorId, sheet, rango, filaLabels, pistaColumnas) {
+            const cont = document.getElementById(contenedorId);
+            if (!cont) return;
+            cont.innerHTML = '<p class="text-slate-400 text-xs p-3">Cargando...</p>';
+            try {
+                const filas = await leerRangoGviz(sheet, rango);
+                const letraBase = letraColumnaDesdeRango(rango);
+                const numCols = filas[0]?.length || 0;
+
+                let html = '<table class="w-full text-xs border-collapse"><thead><tr><th class="p-2 text-left bg-slate-100 border border-slate-200"></th>';
+                for (let c = 0; c < numCols; c++) {
+                    const letra = letraColumna(letraBase, c);
+                    const pista = pistaColumnas?.[c] || '';
+                    html += `<th class="p-2 text-center bg-slate-100 border border-slate-200"><div class="font-mono text-slate-400 text-[10px]">Col ${letra}</div><div class="font-semibold">${pista}</div></th>`;
+                }
+                html += '</tr></thead><tbody>';
+                filas.forEach((f, i) => {
+                    html += `<tr><td class="p-2 font-semibold text-slate-700 bg-slate-50 border border-slate-100 whitespace-nowrap">${filaLabels[i] || `Fila ${i+1}`}</td>`;
+                    f.forEach(v => { html += `<td class="p-2 text-center border border-slate-100">${v === '' ? '—' : v}</td>`; });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                cont.innerHTML = html;
+            } catch (err) {
+                console.warn(`No se pudo leer la matriz "${contenedorId}":`, err);
+                cont.innerHTML = '<p class="text-red-500 text-xs p-3">No se pudo cargar este bloque.</p>';
+            }
+        }
+
+        async function cargarMatricesInforme() {
+            pintarMatrizCeldas('matriz-adulto-camas-tipo', 'adulto', getCelda('informe_adulto_camas_tipo'),
+                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
+                ['', 'UCI', 'UTI', 'MEDIAS', 'BÁSICAS', '', '']);
+
+            pintarMatrizCeldas('matriz-adulto-qx-medico', 'adulto', getCelda('informe_adulto_qx_medico'),
+                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
+                ['Bloque Qx (Básicas/Medias)', '', 'Bloque Médico (Básicas/Medias)', '', 'UCI', '', 'UTI', '', '', '']);
+
+            pintarMatrizCeldas('matriz-pedi-camas-tipo', 'PEDIATRIA', getCelda('informe_pedi_camas_tipo'),
+                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'],
+                ['', 'UCIP', 'UTIP', 'MEDIAS PED', 'BÁSICAS PED', '', '']);
+
+            pintarMatrizCeldas('matriz-pedi-qx-medico', 'PEDIATRIA', getCelda('informe_pedi_qx_medico'),
+                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
+                ['Bloque Qx (Básicas/Medias)', '', 'Bloque Médico (Básicas/Medias)', '', 'UCIP', '', 'UTIP', '', '']);
+
+            pintarMatrizCeldas('matriz-neo-camas-tipo', 'PEDIATRIA', getCelda('informe_neo_camas_tipo'),
+                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'],
+                ['', 'UCI-NEO', 'UTI-NEO', 'MEDIAS-NEO', 'BÁSICAS-NEO', '', '']);
+
+            // Emergencia + % Ocupación (celdas sueltas, con reintento)
+            const [atendidos, hospitalizados, respiratoria, ginecoAt, ginecoHosp, pctAd, pctPed] = await Promise.all([
+                leerCeldaGvizConReintento('adulto', getCelda('emergencia_total_atendidos')),
+                leerCeldaGvizConReintento('adulto', getCelda('emergencia_total_hospitalizados')),
+                leerCeldaGvizConReintento('adulto', getCelda('emergencia_consulta_respiratoria')),
+                leerCeldaGvizConReintento('adulto', getCelda('urgencia_gineco_atendidos')),
+                leerCeldaGvizConReintento('adulto', getCelda('urgencia_gineco_hospitalizados')),
+                leerCeldaGvizConReintento('adulto', getCelda('pct_ocupacion_adulto')),
+                leerCeldaGvizConReintento('PEDIATRIA', getCelda('pct_ocupacion_pedi')),
+            ]).catch(() => []);
+
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = (v == null ? '—' : v); };
+            set('emergencia-atendidos', atendidos);
+            set('emergencia-hospitalizados', hospitalizados);
+            set('emergencia-respiratoria', respiratoria);
+            set('gineco-atendidos', ginecoAt);
+            set('gineco-hospitalizados', ginecoHosp);
+            set('pct-ocupacion-adulto', pctAd != null ? `${pctAd}%` : '—');
+            set('pct-ocupacion-pedi', pctPed != null ? `${pctPed}%` : '—');
+        }
+
         // Abre la hoja "PABELLON/TRASLADOS" (4ta pestaña) del archivo
         // "NOVEDADES ADULTO Y PEDIATRÍA 2026" en formato PDF listo para imprimir/descargar.
         // ---------------------------------------------------------------
@@ -2404,6 +2572,24 @@
 
             // --- Pabellón ---
             'pabellon_gid':                   { valor: '947824045', grupo: 'Pabellón', etiqueta: 'gid de la pestaña "PABELLON/TRASLADOS"' },
+
+            // --- Informe de Turno: Camas por Tipo y Bloques (rangos completos) ---
+            'informe_adulto_camas_tipo':      { valor: 'A49:G52', grupo: 'Informe de Turno · Adulto', etiqueta: 'Rango: Camas por Tipo (UCI/UTI/Medias/Básicas)' },
+            'informe_adulto_qx_medico':       { valor: 'I49:R52', grupo: 'Informe de Turno · Adulto', etiqueta: 'Rango: Altas Encuesta (Bloque Qx / Bloque Médico / UCI / UTI)' },
+            'informe_pedi_camas_tipo':        { valor: 'A55:G60', grupo: 'Informe de Turno · Pediatría', etiqueta: 'Rango: Camas por Tipo (UCIP/UTIP/Medias Ped/Básicas Ped)' },
+            'informe_pedi_qx_medico':         { valor: 'K65:S68', grupo: 'Informe de Turno · Pediatría', etiqueta: 'Rango: Altas Encuesta (Bloque Qx / Bloque Médico / UCIP / UTIP)' },
+            'informe_neo_camas_tipo':         { valor: 'A66:G71', grupo: 'Informe de Turno · Neonatología', etiqueta: 'Rango: Camas por Tipo (UCI-NEO/UTI-NEO/Medias-NEO/Básicas-NEO)' },
+
+            // --- Emergencia Hospitalaria ---
+            'emergencia_total_atendidos':        { valor: 'S55', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Pacientes Atendidos (SEH)' },
+            'emergencia_total_hospitalizados':   { valor: 'S56', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Pacientes Hospitalizados (SEH)' },
+            'emergencia_consulta_respiratoria':  { valor: 'S57', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Consulta Respiratoria (SEH)' },
+            'urgencia_gineco_atendidos':         { valor: 'S60', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Atendidos (Urgencia Gineco-Obstétrica)' },
+            'urgencia_gineco_hospitalizados':    { valor: 'S61', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Hospitalizados (Urgencia Gineco-Obstétrica)' },
+
+            // --- % Ocupación Total ---
+            'pct_ocupacion_adulto':  { valor: 'K54', grupo: '% Ocupación Total', etiqueta: 'Celda % Ocupación Total Adultos (pestaña adulto)' },
+            'pct_ocupacion_pedi':    { valor: 'N70', grupo: '% Ocupación Total', etiqueta: 'Celda % Ocupación Total Pediatría (pestaña PEDIATRIA)' },
         };
 
         let configCeldasCache = {}; // solo overrides (lo que el admin cambió); si una clave no está, se usa el valor por defecto
@@ -2496,6 +2682,7 @@
                 renderConfigCeldas();
                 // Recarga los módulos afectados para ver el cambio de inmediato
                 cargarKpisCamasCriticas();
+                cargarMatricesInforme();
                 if (typeof cargarSolicitudesSalida === 'function') cargarSolicitudesSalida();
                 if (typeof cargarResidentesTurno === 'function') cargarResidentesTurno();
             }
@@ -2506,6 +2693,7 @@
             if (ok) {
                 renderConfigCeldas();
                 cargarKpisCamasCriticas();
+                cargarMatricesInforme();
                 if (typeof cargarSolicitudesSalida === 'function') cargarSolicitudesSalida();
                 if (typeof cargarResidentesTurno === 'function') cargarResidentesTurno();
             }
@@ -3013,7 +3201,7 @@
             if (modId === 'hec-huap') cargarCasosHecHuap();
             if (modId === 'macrorred') cargarRedDerivaciones();
             if (modId === 'ref-adulto') cargarDirectorioAdulto();
-            if (modId === 'informe') cargarKpisCamasCriticas();
+            if (modId === 'informe') { cargarKpisCamasCriticas(); cargarMatricesInforme(); }
             if (modId === 'config-celdas') renderConfigCeldas();
             if (modId === 'ref-pede') cargarDirectorioPede();
 

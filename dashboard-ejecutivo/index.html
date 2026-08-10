@@ -353,10 +353,10 @@ class Component extends DCLogic {
       ] },
     { id: 'cdt', icon: 'fa-solid fa-stethoscope', bg: '#fffbeb', text: '#d97706', name: 'Solicitudes CDT', subtitle: 'Solicitudes de diagnóstico y tratamiento por especialidad',
       kpis: [
-        { label: 'Solicitudes pendientes', value: '14', sub: 'Todas las especialidades' },
-        { label: 'Aprobadas hoy', value: '6', sub: '' },
-        { label: 'Rechazadas hoy', value: '2', sub: '' },
-        { label: 'Tiempo prom. respuesta', value: '2.4 h', sub: '' },
+        { label: 'Solicitudes totales', value: '14', sub: 'Registros en la planilla' },
+        { label: 'Hospitalizados (SI)', value: '6', sub: '' },
+        { label: 'No Hospitalizados', value: '5', sub: '' },
+        { label: 'Devuelta / Pasivo', value: '3', sub: '' },
       ],
       pendientesEsp: [
         { estado: 'Cirugía', count: 3 },
@@ -728,12 +728,48 @@ class Component extends DCLogic {
     const filasConDatos = data.rows.filter((f) => f.some((v) => String(v ?? '').trim() !== ''));
     if (filasConDatos.length === 0) return;
 
-    // KPI superior: total de solicitudes registradas en la planilla real.
-    // (Las otras 3 tarjetas -- Aprobadas hoy / Rechazadas hoy / Tiempo
-    // promedio -- se dejan de ejemplo porque dependen de columnas de
-    // fecha/estado que aún no confirmamos con exactitud en esta planilla.)
+    // KPI 1: total de solicitudes registradas en la planilla real.
     cdtMod.kpis[0].value = String(filasConDatos.length);
     cdtMod.kpis[0].sub = 'Registros totales en la planilla';
+
+    // Columna H = "Hospitalizado" (confirmado): vacío, NO, SI, DEVUELTA, HOSDOM, PASIVO
+    const IDX_HOSPITALIZADO = 7; // columna H (0 = A, 7 = H)
+    const contarHosp = (valor) => filasConDatos.filter((f) => String(f[IDX_HOSPITALIZADO] ?? '').trim().toUpperCase() === valor).length;
+    cdtMod.kpis[1].value = String(contarHosp('SI'));
+    cdtMod.kpis[2].value = String(contarHosp('NO'));
+    // "Devuelta / Pasivo" agrupa DEVUELTA + HOSDOM + PASIVO
+    const devueltaPasivo = filasConDatos.filter((f) => {
+      const v = String(f[IDX_HOSPITALIZADO] ?? '').trim().toUpperCase();
+      return v === 'DEVUELTA' || v === 'HOSDOM' || v === 'PASIVO';
+    }).length;
+    cdtMod.kpis[3].value = String(devueltaPasivo);
+
+    // Especialidad / Tipo de Solicitud (ej: MEDICINA, CIRUGIA) -- se detecta
+    // la columna por su encabezado (más robusto que fijar una letra).
+    const idxEspecialidad = this.col(data.headers, /especialidad|equipo|servicio/);
+    if (idxEspecialidad >= 0) {
+      const conteo = {};
+      filasConDatos.forEach((f) => {
+        const v = String(f[idxEspecialidad] ?? '').trim();
+        if (v) conteo[v] = (conteo[v] || 0) + 1;
+      });
+      const arr = Object.keys(conteo).map((k) => ({ estado: k, count: conteo[k] }));
+      if (arr.length) { cdtMod.pendientesEsp = arr; cdtMod.tiposSolicitud = arr; }
+    }
+
+    // Carpeta / Gestor -- "Luis Barraza" se muestra como "QMT"
+    const idxCarpeta = this.col(data.headers, /carpeta|gestor/);
+    if (idxCarpeta >= 0) {
+      const conteo = {};
+      filasConDatos.forEach((f) => {
+        let v = String(f[idxCarpeta] ?? '').trim();
+        if (!v) return;
+        if (/barraza/i.test(v)) v = 'QMT';
+        conteo[v] = (conteo[v] || 0) + 1;
+      });
+      const arr = Object.keys(conteo).map((k) => ({ estado: k, count: conteo[k] }));
+      if (arr.length) cdtMod.carpetas = arr;
+    }
   }
 
   renderVals() {

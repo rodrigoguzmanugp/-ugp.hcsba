@@ -322,6 +322,12 @@
             <button data-restrict-guest="true" onclick="navigateToModule('ref-pede')" data-restrict-guest="true" id="nav-ref-pede" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
                 <i class="fa-solid fa-child-reaching mr-1.5"></i> Ref. Pediatría/Gine
             </button>
+            <button data-restrict-guest="true" onclick="navigateToModule('dashboard-ejec')" id="nav-dashboard-ejec" class="nav-btn px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard Ejecutivo
+            </button>
+            <button data-admin-only="true" onclick="navigateToModule('config-celdas')" id="nav-config-celdas" class="hidden nav-btn px-3 py-2 rounded-md text-rose-600 hover:bg-rose-50 transition">
+                <i class="fa-solid fa-table-cells mr-1.5"></i> Config. Celdas
+            </button>
             <div id="nav-custom-container" class="flex space-x-1 sm:space-x-2"></div>
         </div>
     </nav>
@@ -1241,6 +1247,46 @@
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- MODULE 10: DASHBOARD EJECUTIVO (embebido)   -->
+        <!-- ========================================== -->
+        <section id="mod-dashboard-ejec" class="module-section hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Dashboard Ejecutivo</h2>
+                    <p class="text-xs text-slate-500">Resumen visual de todos los módulos — actualmente con datos de ejemplo (no conectado a las planillas reales todavía)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="document.getElementById('iframe-dashboard-ejec').src = document.getElementById('iframe-dashboard-ejec').src" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border border-slate-300">
+                        <i class="fa-solid fa-rotate mr-1"></i> Recargar
+                    </button>
+                    <a href="dashboard-ejecutivo/index.html" target="_blank" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2 rounded-lg font-medium shadow-sm flex items-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Abrir en Pestaña Nueva
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="height: 78vh;">
+                <iframe id="iframe-dashboard-ejec" src="dashboard-ejecutivo/index.html" class="w-full h-full border-0" title="Dashboard Ejecutivo UGCC"></iframe>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- MODULE 11: CONFIGURACIÓN DE CELDAS (Admin)  -->
+        <!-- ========================================== -->
+        <section id="mod-config-celdas" class="module-section hidden space-y-4">
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 mt-0.5"></i>
+                <div>
+                    <h2 class="text-lg font-bold text-rose-900">Configuración de Celdas</h2>
+                    <p class="text-xs text-rose-700">Solo Admin. Corrige aquí la celda/rango exacto que se lee de cada Google Sheet si la planilla original cambia de estructura (filas/columnas movidas). Los cambios se guardan para <strong>todos los usuarios</strong> de inmediato — no hace falta subir nada a GitHub.</p>
+                </div>
+            </div>
+            <div id="lista-config-celdas" class="space-y-6">
+                <p class="text-slate-400 text-sm text-center py-8">Cargando...</p>
+            </div>
+        </section>
+
     </main>
     </div>
     <!-- /app-shell -->
@@ -1738,6 +1784,12 @@
                     el.title = '';
                 }
             });
+
+            // Elementos solo-Admin (ej. "Configuración de Celdas")
+            const esAdmin = sesion.rol === 'admin';
+            document.querySelectorAll('[data-admin-only="true"]').forEach(el => {
+                el.classList.toggle('hidden', !esAdmin);
+            });
         }
 
         // Al cargar la página: si Supabase ya tiene una sesión válida (token
@@ -1775,7 +1827,6 @@
         // ID real de la planilla "NOVEDADES ADULTO Y PEDIATRÍA 2026"
         const NOVEDADES_SPREADSHEET_ID = '19N-zYZAwCUI14S3-OhsQur1aDmqrUawq73ihCC-VUlI';
         // gid de la 4ta hoja "PABELLON/TRASLADOS" dentro de esa misma planilla
-        const PABELLON_TRASLADOS_GID = '947824045';
         // ID real de la planilla "INFORME DE TURNO"
         const INFORME_TURNO_SPREADSHEET_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0';
         // ID real de la planilla "PLANILLA HORARIO INHÁBIL"
@@ -1809,12 +1860,18 @@
 
         // Mapa de celdas exactas por indicador: total de camas y camas ocupadas.
         // Disponibles y % de ocupación se calculan a partir de ambas.
-        const CELDAS_CAMAS_CRITICAS = {
-            'uci-adulto': { sheet: 'adulto',    totalCell: 'D49', ocupadasCell: 'D50', reservadasCeldas: ['E18', 'E19', 'E26'], bloqueadasCeldas: ['Q18', 'Q19', 'Q26'] },
-            'uti-adulto': { sheet: 'adulto',    totalCell: 'E49', ocupadasCell: 'E50', reservadasCeldas: ['E20', 'E27', 'E33'], bloqueadasCeldas: ['Q20', 'Q27', 'Q33'] },
-            'ucip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'D55', ocupadasCell: 'D56', reservadasCeldas: ['E15'], bloqueadasCeldas: ['Q15'] },
-            'utip-pedi':  { sheet: 'PEDIATRIA', totalCell: 'E55', ocupadasCell: 'E56', reservadasCeldas: ['E16'], bloqueadasCeldas: ['Q16'] }
-        };
+        // Construye la configuración de celdas críticas leyendo el valor
+        // VIGENTE (override del admin, si existe, o el de fábrica) cada
+        // vez que se llama -- así los cambios en "Configuración de Celdas"
+        // se aplican de inmediato sin recargar la página.
+        function construirCeldasCamasCriticas() {
+            return {
+                'uci-adulto': { sheet: 'adulto',    totalCell: getCelda('informe_uci_adulto_total'),  ocupadasCell: getCelda('informe_uci_adulto_ocupadas'),  reservadasCeldas: getCeldasLista('informe_uci_adulto_reservadas'),  bloqueadasCeldas: getCeldasLista('informe_uci_adulto_bloqueadas') },
+                'uti-adulto': { sheet: 'adulto',    totalCell: getCelda('informe_uti_adulto_total'),  ocupadasCell: getCelda('informe_uti_adulto_ocupadas'),  reservadasCeldas: getCeldasLista('informe_uti_adulto_reservadas'),  bloqueadasCeldas: getCeldasLista('informe_uti_adulto_bloqueadas') },
+                'ucip-pedi':  { sheet: 'PEDIATRIA', totalCell: getCelda('informe_ucip_pedi_total'),   ocupadasCell: getCelda('informe_ucip_pedi_ocupadas'),   reservadasCeldas: getCeldasLista('informe_ucip_pedi_reservadas'),   bloqueadasCeldas: getCeldasLista('informe_ucip_pedi_bloqueadas') },
+                'utip-pedi':  { sheet: 'PEDIATRIA', totalCell: getCelda('informe_utip_pedi_total'),   ocupadasCell: getCelda('informe_utip_pedi_ocupadas'),   reservadasCeldas: getCeldasLista('informe_utip_pedi_reservadas'),   bloqueadasCeldas: getCeldasLista('informe_utip_pedi_bloqueadas') }
+            };
+        }
 
         // Guarda el último dato cargado de cada categoría para reutilizarlo
         // en otras vistas (ej. "1. Resumen Ocupacional" del Informe de Turno)
@@ -2000,6 +2057,7 @@
         }
 
         async function cargarKpisCamasCriticas() {
+            const CELDAS_CAMAS_CRITICAS = construirCeldasCamasCriticas();
             for (const prefix of Object.keys(CELDAS_CAMAS_CRITICAS)) {
                 const cfg = CELDAS_CAMAS_CRITICAS[prefix];
                 let total = null;
@@ -2052,7 +2110,7 @@
         // Turno (Dotación, Ocupadas, Reservadas, Bloqueadas, Disponibles),
         // reutilizando los mismos datos ya leídos para Inicio/Dashboard.
         function pintarResumenOcupacionalInforme() {
-            for (const prefix of Object.keys(CELDAS_CAMAS_CRITICAS)) {
+            for (const prefix of ['uci-adulto', 'uti-adulto', 'ucip-pedi', 'utip-pedi']) {
                 const d = datosCamasCriticas[prefix];
                 if (!d) continue;
                 const disponibles = (d.total != null && d.ocupadas != null) ? Math.max(d.total - d.ocupadas, 0) : null;
@@ -2077,13 +2135,9 @@
         //   - Pestaña Adulto: encabezado en fila 42 (A42:F42), datos desde A43
         //   - Pestaña Pediatría: PENDIENTE de configurar (rango/nombre de pestaña)
         // ---------------------------------------------------------------
-        const SOLICITUDES_ADULTO_SHEET = 'NOVEDADES ADULTO';
-        const SOLICITUDES_ADULTO_RANGO = 'A43:F48';          // Solicitudes de Cama de Salida / Respaldo (máx 6 filas)
-        const FUTUROS_PABELLONES_ADULTO_RANGO = 'A50:F54';   // Futuros Pabellones (máx 5 filas, tras fila de título A49)
-
-        const SOLICITUDES_PEDIATRIA_SHEET = 'NOVEDADES PEDIATRICAS';
-        const SOLICITUDES_UCIP_RANGO = 'A53:G57';  // Salidas Camas UCIP (máx 5 filas de datos, tras encabezado en fila 52)
-        const SOLICITUDES_UTIP_RANGO = 'A67:G71';  // Salidas Camas UTIP (máx 5 filas, desde fila 67)
+        // (Nombres de pestañas y rangos ahora se leen dinámicamente vía
+        // getCelda(...) en cada función, para reflejar al instante los
+        // cambios hechos en "Configuración de Celdas" por el Admin)
 
         // Descarga un rango rectangular de una pestaña. Prioriza la API
         // oficial (si el usuario conectó Google) y cae al método público.
@@ -2148,10 +2202,10 @@
 
         async function cargarSolicitudesSalida() {
             const cargas = [
-                { sheet: SOLICITUDES_ADULTO_SHEET, rango: SOLICITUDES_ADULTO_RANGO, tbodyId: 'tabla-solicitudes-adulto', cols: 6, label: 'Solicitudes de Salida (Adulto)' },
-                { sheet: SOLICITUDES_ADULTO_SHEET, rango: FUTUROS_PABELLONES_ADULTO_RANGO, tbodyId: 'tabla-futuros-pabellones-adulto', cols: 6, label: 'Futuros Pabellones (Adulto)' },
-                { sheet: SOLICITUDES_PEDIATRIA_SHEET, rango: SOLICITUDES_UCIP_RANGO, tbodyId: 'tabla-solicitudes-pediatria-ucip', cols: 7, label: 'Salidas Camas UCIP' },
-                { sheet: SOLICITUDES_PEDIATRIA_SHEET, rango: SOLICITUDES_UTIP_RANGO, tbodyId: 'tabla-solicitudes-pediatria-utip', cols: 7, label: 'Salidas Camas UTIP' }
+                { sheet: getCelda('novedades_adulto_hoja'), rango: getCelda('novedades_adulto_solicitudes'), tbodyId: 'tabla-solicitudes-adulto', cols: 6, label: 'Solicitudes de Salida (Adulto)' },
+                { sheet: getCelda('novedades_adulto_hoja'), rango: getCelda('novedades_adulto_pabellones'), tbodyId: 'tabla-futuros-pabellones-adulto', cols: 6, label: 'Futuros Pabellones (Adulto)' },
+                { sheet: getCelda('novedades_pedi_hoja'), rango: getCelda('novedades_pedi_ucip'), tbodyId: 'tabla-solicitudes-pediatria-ucip', cols: 7, label: 'Salidas Camas UCIP' },
+                { sheet: getCelda('novedades_pedi_hoja'), rango: getCelda('novedades_pedi_utip'), tbodyId: 'tabla-solicitudes-pediatria-utip', cols: 7, label: 'Salidas Camas UTIP' }
             ];
 
             for (const c of cargas) {
@@ -2175,8 +2229,6 @@
         // Solo se muestra: Unidad, Médico(s) Residente(s) y el nombre del
         // EU/Matrona Jefe de Turno -- sin replicar toda la grilla de camas.
         // ---------------------------------------------------------------
-        const RESIDENTES_ADULTO_RANGO = 'A13:L19';
-        const RESIDENTES_PEDIATRIA_RANGO = 'A11:L19';
 
         // Detecta el inicio de cada "unidad" en la fila de secciones: un
         // valor no vacío, seguido de columnas vacías hasta el próximo valor
@@ -2246,7 +2298,7 @@
             const theadA = 'cabecera-residentes-adulto', tbodyA = 'tabla-residentes-adulto';
             document.getElementById(tbodyA).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
-                const filas = await leerRangoGviz(SOLICITUDES_ADULTO_SHEET, RESIDENTES_ADULTO_RANGO);
+                const filas = await leerRangoGviz(getCelda('novedades_adulto_hoja'), getCelda('novedades_adulto_residentes'));
                 pintarResidentesSimplificado(theadA, tbodyA, filas);
             } catch (err) {
                 console.warn('No se pudo leer Residentes en Turno (Adulto):', err);
@@ -2256,7 +2308,7 @@
             const theadP = 'cabecera-residentes-pediatria', tbodyP = 'tabla-residentes-pediatria';
             document.getElementById(tbodyP).innerHTML = '<tr><td class="px-3 py-4 text-center text-slate-400">Cargando...</td></tr>';
             try {
-                const filasP = await leerRangoGviz(SOLICITUDES_PEDIATRIA_SHEET, RESIDENTES_PEDIATRIA_RANGO);
+                const filasP = await leerRangoGviz(getCelda('novedades_pedi_hoja'), getCelda('novedades_pedi_residentes'));
                 pintarResidentesSimplificado(theadP, tbodyP, filasP);
             } catch (err) {
                 console.warn('No se pudo leer Residentes en Turno (Pediatría/Materno):', err);
@@ -2288,7 +2340,7 @@
         function imprimirSolicitudPabellon() {
             if (bloquearSiInvitado()) return;
             const printUrl = `https://docs.google.com/spreadsheets/d/${NOVEDADES_SPREADSHEET_ID}/export`
-                + `?format=pdf&gid=${PABELLON_TRASLADOS_GID}`
+                + `?format=pdf&gid=${getCelda('pabellon_gid')}`
                 + `&portrait=true&size=letter&scale=4`
                 + `&horizontal_alignment=CENTER&vertical_alignment=MIDDLE`
                 + `&top_margin=0.4&bottom_margin=0.4&left_margin=0.4&right_margin=0.4`
@@ -2307,6 +2359,157 @@
         // Si Supabase no está configurado, cae a localStorage (modo local).
         // ---------------------------------------------------------------
         let enlacesConfigCache = {};
+
+        // ---------------------------------------------------------------
+        // CONFIGURACIÓN DE CELDAS (editable solo por Admin, compartida)
+        // Centraliza TODAS las celdas/rangos que se leen de cada Google
+        // Sheet, para poder corregirlas desde la app (sin tocar código)
+        // si la planilla original cambia de estructura. Se guarda en la
+        // tabla Supabase "config_celdas" -> visible para todos.
+        // Cada entrada: clave técnica -> { valor por defecto, etiqueta,
+        // grupo (para agrupar en el panel de Admin) }.
+        // ---------------------------------------------------------------
+        const CONFIG_CELDAS_DEFAULT = {
+            // --- Informe de Turno: Camas Críticas ---
+            'informe_uci_adulto_total':       { valor: 'D49',            grupo: 'Informe de Turno · UCI Adulto',  etiqueta: 'Celda Total (Dotación)' },
+            'informe_uci_adulto_ocupadas':    { valor: 'D50',            grupo: 'Informe de Turno · UCI Adulto',  etiqueta: 'Celda Ocupadas' },
+            'informe_uci_adulto_reservadas':  { valor: 'E18,E19,E26',    grupo: 'Informe de Turno · UCI Adulto',  etiqueta: 'Celdas Reservadas (suma, separadas por coma)' },
+            'informe_uci_adulto_bloqueadas':  { valor: 'Q18,Q19,Q26',    grupo: 'Informe de Turno · UCI Adulto',  etiqueta: 'Celdas Bloqueadas (suma, separadas por coma)' },
+
+            'informe_uti_adulto_total':       { valor: 'E49',            grupo: 'Informe de Turno · UTI Adulto',  etiqueta: 'Celda Total (Dotación)' },
+            'informe_uti_adulto_ocupadas':    { valor: 'E50',            grupo: 'Informe de Turno · UTI Adulto',  etiqueta: 'Celda Ocupadas' },
+            'informe_uti_adulto_reservadas':  { valor: 'E20,E27,E33',    grupo: 'Informe de Turno · UTI Adulto',  etiqueta: 'Celdas Reservadas (suma, separadas por coma)' },
+            'informe_uti_adulto_bloqueadas':  { valor: 'Q20,Q27,Q33',    grupo: 'Informe de Turno · UTI Adulto',  etiqueta: 'Celdas Bloqueadas (suma, separadas por coma)' },
+
+            'informe_ucip_pedi_total':        { valor: 'D55',  grupo: 'Informe de Turno · UCIP Pediatría', etiqueta: 'Celda Total (Dotación)' },
+            'informe_ucip_pedi_ocupadas':     { valor: 'D56',  grupo: 'Informe de Turno · UCIP Pediatría', etiqueta: 'Celda Ocupadas' },
+            'informe_ucip_pedi_reservadas':   { valor: 'E15',  grupo: 'Informe de Turno · UCIP Pediatría', etiqueta: 'Celdas Reservadas (suma, separadas por coma)' },
+            'informe_ucip_pedi_bloqueadas':   { valor: 'Q15',  grupo: 'Informe de Turno · UCIP Pediatría', etiqueta: 'Celdas Bloqueadas (suma, separadas por coma)' },
+
+            'informe_utip_pedi_total':        { valor: 'E55',  grupo: 'Informe de Turno · UTIP Pediatría', etiqueta: 'Celda Total (Dotación)' },
+            'informe_utip_pedi_ocupadas':     { valor: 'E56',  grupo: 'Informe de Turno · UTIP Pediatría', etiqueta: 'Celda Ocupadas' },
+            'informe_utip_pedi_reservadas':   { valor: 'E16',  grupo: 'Informe de Turno · UTIP Pediatría', etiqueta: 'Celdas Reservadas (suma, separadas por coma)' },
+            'informe_utip_pedi_bloqueadas':   { valor: 'Q16',  grupo: 'Informe de Turno · UTIP Pediatría', etiqueta: 'Celdas Bloqueadas (suma, separadas por coma)' },
+
+            // --- Novedades: Solicitudes de Salida / Futuros Pabellones ---
+            'novedades_adulto_hoja':          { valor: 'NOVEDADES ADULTO',    grupo: 'Novedades · Adulto', etiqueta: 'Nombre de la pestaña' },
+            'novedades_adulto_solicitudes':   { valor: 'A43:F48',             grupo: 'Novedades · Adulto', etiqueta: 'Rango: Solicitudes de Cama de Salida / Respaldo' },
+            'novedades_adulto_pabellones':    { valor: 'A50:F54',             grupo: 'Novedades · Adulto', etiqueta: 'Rango: Futuros Pabellones' },
+            'novedades_adulto_residentes':    { valor: 'A13:L19',             grupo: 'Novedades · Adulto', etiqueta: 'Rango: Residentes en Turno' },
+
+            'novedades_pedi_hoja':            { valor: 'NOVEDADES PEDIATRICAS', grupo: 'Novedades · Pediatría', etiqueta: 'Nombre de la pestaña' },
+            'novedades_pedi_ucip':            { valor: 'A53:G57',             grupo: 'Novedades · Pediatría', etiqueta: 'Rango: Salidas Camas UCIP' },
+            'novedades_pedi_utip':            { valor: 'A67:G71',             grupo: 'Novedades · Pediatría', etiqueta: 'Rango: Salidas Camas UTIP' },
+            'novedades_pedi_residentes':      { valor: 'A11:L19',             grupo: 'Novedades · Pediatría', etiqueta: 'Rango: Residentes en Turno' },
+
+            // --- Pabellón ---
+            'pabellon_gid':                   { valor: '947824045', grupo: 'Pabellón', etiqueta: 'gid de la pestaña "PABELLON/TRASLADOS"' },
+        };
+
+        let configCeldasCache = {}; // solo overrides (lo que el admin cambió); si una clave no está, se usa el valor por defecto
+
+        async function cargarConfigCeldas() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('config_celdas').select('clave, valor');
+            if (error) { console.warn('No se pudo cargar la configuración de celdas compartida:', error); return; }
+            configCeldasCache = {};
+            (data || []).forEach(row => { configCeldasCache[row.clave] = row.valor; });
+        }
+
+        // Devuelve el valor vigente (override del admin, o el de fábrica)
+        function getCelda(clave) {
+            if (configCeldasCache[clave] != null) return configCeldasCache[clave];
+            return CONFIG_CELDAS_DEFAULT[clave]?.valor ?? '';
+        }
+
+        // Convierte "E18,E19,E26" -> ['E18','E19','E26'] para las celdas que se suman
+        function getCeldasLista(clave) {
+            return getCelda(clave).split(',').map(s => s.trim()).filter(Boolean);
+        }
+
+        async function guardarCelda(clave, valorNuevo) {
+            if (!supabaseClient) { alert('Supabase no está configurado.'); return false; }
+            const { error } = await supabaseClient.from('config_celdas').upsert({
+                clave, valor: valorNuevo.trim(),
+                actualizado_por: sesionActiva?.usuario || 'desconocido',
+                actualizado_en: new Date().toISOString()
+            });
+            if (error) { alert(`No se pudo guardar "${clave}": ${error.message}`); return false; }
+            configCeldasCache[clave] = valorNuevo.trim();
+            return true;
+        }
+
+        async function restaurarCeldaPorDefecto(clave) {
+            if (!supabaseClient) return false;
+            const { error } = await supabaseClient.from('config_celdas').delete().eq('clave', clave);
+            if (error) { alert(`No se pudo restaurar "${clave}": ${error.message}`); return false; }
+            delete configCeldasCache[clave];
+            return true;
+        }
+
+        // Dibuja el panel de "Configuración de Celdas", agrupado por sección.
+        function renderConfigCeldas() {
+            const cont = document.getElementById('lista-config-celdas');
+            if (!cont) return;
+
+            // Agrupa las claves por su "grupo" (Informe de Turno · UCI Adulto, Novedades · Adulto, etc.)
+            const grupos = {};
+            Object.keys(CONFIG_CELDAS_DEFAULT).forEach(clave => {
+                const def = CONFIG_CELDAS_DEFAULT[clave];
+                (grupos[def.grupo] = grupos[def.grupo] || []).push(clave);
+            });
+
+            cont.innerHTML = Object.keys(grupos).map(nombreGrupo => `
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-slate-100 px-4 py-2 font-bold text-sm text-slate-700">${nombreGrupo}</div>
+                    <div class="divide-y divide-slate-100">
+                        ${grupos[nombreGrupo].map(clave => {
+                            const def = CONFIG_CELDAS_DEFAULT[clave];
+                            const valorVigente = getCelda(clave);
+                            const esOverride = configCeldasCache[clave] != null;
+                            return `
+                            <div class="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div class="flex-1">
+                                    <p class="text-xs font-semibold text-slate-700">${def.etiqueta}</p>
+                                    <p class="text-[10px] text-slate-400">Clave: ${clave} · Valor de fábrica: ${def.valor}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input id="input-${clave}" type="text" value="${valorVigente}"
+                                        class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 w-40 sm:w-48 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                    <button onclick="guardarCeldaDesdePanel('${clave}')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                    </button>
+                                    ${esOverride ? `<button onclick="restaurarCeldaDesdePanel('${clave}')" title="Restaurar valor de fábrica" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs px-3 py-2 rounded-lg transition"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function guardarCeldaDesdePanel(clave) {
+            const input = document.getElementById(`input-${clave}`);
+            if (!input || !input.value.trim()) return;
+            const ok = await guardarCelda(clave, input.value);
+            if (ok) {
+                renderConfigCeldas();
+                // Recarga los módulos afectados para ver el cambio de inmediato
+                cargarKpisCamasCriticas();
+                if (typeof cargarSolicitudesSalida === 'function') cargarSolicitudesSalida();
+                if (typeof cargarResidentesTurno === 'function') cargarResidentesTurno();
+            }
+        }
+
+        async function restaurarCeldaDesdePanel(clave) {
+            const ok = await restaurarCeldaPorDefecto(clave);
+            if (ok) {
+                renderConfigCeldas();
+                cargarKpisCamasCriticas();
+                if (typeof cargarSolicitudesSalida === 'function') cargarSolicitudesSalida();
+                if (typeof cargarResidentesTurno === 'function') cargarResidentesTurno();
+            }
+        }
 
         async function cargarEnlacesConfig() {
             if (!supabaseClient) return;
@@ -2373,6 +2576,10 @@
 
         function navigateToModule(modId) {
             if (bloquearSiInvitado('El modo Invitado (Solo Consulta) por ahora solo puede ver el Inicio / Dashboard.')) return;
+            if (modId === 'config-celdas' && sesionActiva?.rol !== 'admin') {
+                alert('Esta sección es solo para el Administrador.');
+                return;
+            }
             // Solo navega dentro de la página. Abrir el Google Sheet es una
             // acción explícita aparte (botones "Abrir Google Sheet" en
             // Inicio/Dashboard y en el encabezado principal).
@@ -2807,6 +3014,7 @@
             if (modId === 'macrorred') cargarRedDerivaciones();
             if (modId === 'ref-adulto') cargarDirectorioAdulto();
             if (modId === 'informe') cargarKpisCamasCriticas();
+            if (modId === 'config-celdas') renderConfigCeldas();
             if (modId === 'ref-pede') cargarDirectorioPede();
 
             // Módulos personalizados: cargan su tabla en vivo al abrirlos
@@ -3401,6 +3609,7 @@
                 document.getElementById('supabase-config-warning').classList.remove('hidden');
             }
             await cargarEnlacesConfig();
+            await cargarConfigCeldas();
             await cargarModulosCustomDesdeSupabase();
             renderModulosCustom(true);
             cargarKpisCamasCriticas();

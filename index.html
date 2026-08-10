@@ -995,12 +995,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Novedades de Turno -->
-                <div>
-                    <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">6. Novedades y Eventos Relevantes</h4>
-                    <textarea class="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500" rows="6" placeholder="Ingrese aquí las novedades y eventos relevantes del turno..."></textarea>
-                </div>
             </div>
         </section>
 
@@ -2201,48 +2195,51 @@
         }
 
         // ---------------------------------------------------------------
-        // MATRICES DE CAMAS (Informe de Turno): lee un rango completo tal
-        // cual está en la hoja y lo muestra en una tabla honesta -- con la
-        // LETRA DE COLUMNA REAL de tu planilla (B, C, D...) para que puedas
-        // comprobar tú mismo que calza con UCI/UTI/MEDIAS/BÁSICAS, etc.
-        // Si algún bloque no calza, ajusta el rango en "Config. Celdas".
+        // MATRICES DE CAMAS (Informe de Turno): cada tipo de cama lee su
+        // propia celda inicial (editable en "Config. Celdas") y baja fila
+        // por fila para las demás métricas del bloque. Mucho más confiable
+        // que leer un rango ancho completo (Google puede omitir columnas
+        // vacías al inicio y correr todo el bloque).
         // ---------------------------------------------------------------
-        function letraColumnaDesdeRango(rango) {
-            const m = rango.match(/^([A-Z]+)\d+/);
-            return m ? m[1] : 'A';
-        }
-        function letraColumna(letraBase, offset) {
-            let num = 0;
-            for (const c of letraBase) num = num * 26 + (c.charCodeAt(0) - 64);
-            num += offset;
-            let resultado = '';
-            while (num > 0) {
-                const rem = (num - 1) % 26;
-                resultado = String.fromCharCode(65 + rem) + resultado;
-                num = Math.floor((num - 1) / 26);
-            }
-            return resultado;
+        function parseCelda(celda) {
+            const m = String(celda || '').trim().match(/^([A-Z]+)(\d+)$/i);
+            if (!m) return null;
+            return { col: m[1].toUpperCase(), fila: Number(m[2]) };
         }
 
-        async function pintarMatrizCeldas(contenedorId, sheet, rango, filaLabels, pistaColumnas) {
+        async function pintarMatrizPorTipos(contenedorId, bloque) {
             const cont = document.getElementById(contenedorId);
             if (!cont) return;
             cont.innerHTML = '<p class="text-slate-400 text-xs p-3">Cargando...</p>';
+
+            // Para cada tipo: celda/nombre vigentes (override de Admin o de fábrica)
+            const tiposVigentes = bloque.tipos.map(t => ({
+                id: t.id,
+                nombre: getCelda(`informe_${bloque.grupoId}_${t.id}_nombre`),
+                celdaInicio: parseCelda(getCelda(`informe_${bloque.grupoId}_${t.id}_celda`))
+            }));
+
             try {
-                const filas = await leerRangoGvizInforme(sheet, rango);
-                const letraBase = letraColumnaDesdeRango(rango);
-                const numCols = filas[0]?.length || 0;
+                // Lee, para cada tipo, una celda por cada métrica (misma columna, filas consecutivas)
+                const valoresPorTipo = await Promise.all(tiposVigentes.map(async t => {
+                    if (!t.celdaInicio) return bloque.metricas.map(() => null);
+                    const lecturas = await Promise.all(bloque.metricas.map((_, i) =>
+                        leerCeldaGvizConReintento(bloque.sheet, `${t.celdaInicio.col}${t.celdaInicio.fila + i}`)
+                    ));
+                    return lecturas;
+                }));
 
                 let html = '<table class="w-full text-xs border-collapse"><thead><tr><th class="p-2 text-left bg-slate-100 border border-slate-200"></th>';
-                for (let c = 0; c < numCols; c++) {
-                    const letra = letraColumna(letraBase, c);
-                    const pista = pistaColumnas?.[c] || '';
-                    html += `<th class="p-2 text-center bg-slate-100 border border-slate-200"><div class="font-mono text-slate-400 text-[10px]">Col ${letra}</div><div class="font-semibold">${pista}</div></th>`;
-                }
+                tiposVigentes.forEach(t => {
+                    html += `<th class="p-2 text-center bg-slate-100 border border-slate-200 font-semibold">${t.nombre}</th>`;
+                });
                 html += '</tr></thead><tbody>';
-                filas.forEach((f, i) => {
-                    html += `<tr><td class="p-2 font-semibold text-slate-700 bg-slate-50 border border-slate-100 whitespace-nowrap">${filaLabels[i] || `Fila ${i+1}`}</td>`;
-                    f.forEach(v => { html += `<td class="p-2 text-center border border-slate-100">${v === '' ? '—' : v}</td>`; });
+                bloque.metricas.forEach((metrica, i) => {
+                    html += `<tr><td class="p-2 font-semibold text-slate-700 bg-slate-50 border border-slate-100 whitespace-nowrap">${metrica}</td>`;
+                    valoresPorTipo.forEach(vals => {
+                        const v = vals[i];
+                        html += `<td class="p-2 text-center border border-slate-100">${v == null ? '—' : v}</td>`;
+                    });
                     html += '</tr>';
                 });
                 html += '</tbody></table>';
@@ -2254,25 +2251,16 @@
         }
 
         async function cargarMatricesInforme() {
-            pintarMatrizCeldas('matriz-adulto-camas-tipo', 'adulto', getCelda('informe_adulto_camas_tipo'),
-                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
-                ['', 'UCI', 'UTI', 'MEDIAS', 'BÁSICAS', '', '']);
-
-            pintarMatrizCeldas('matriz-adulto-qx-medico', 'adulto', getCelda('informe_adulto_qx_medico'),
-                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
-                ['Bloque Qx (Básicas/Medias)', '', 'Bloque Médico (Básicas/Medias)', '', 'UCI', '', 'UTI', '', '', '']);
-
-            pintarMatrizCeldas('matriz-pedi-camas-tipo', 'PEDIATRIA', getCelda('informe_pedi_camas_tipo'),
-                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'],
-                ['', 'UCIP', 'UTIP', 'MEDIAS PED', 'BÁSICAS PED', '', '']);
-
-            pintarMatrizCeldas('matriz-pedi-qx-medico', 'PEDIATRIA', getCelda('informe_pedi_qx_medico'),
-                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'],
-                ['Bloque Qx (Básicas/Medias)', '', 'Bloque Médico (Básicas/Medias)', '', 'UCIP', '', 'UTIP', '', '']);
-
-            pintarMatrizCeldas('matriz-neo-camas-tipo', 'PEDIATRIA', getCelda('informe_neo_camas_tipo'),
-                ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID', 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'],
-                ['', 'UCI-NEO', 'UTI-NEO', 'MEDIAS-NEO', 'BÁSICAS-NEO', '', '']);
+            const idsContenedor = {
+                adulto_camas: 'matriz-adulto-camas-tipo',
+                adulto_qx: 'matriz-adulto-qx-medico',
+                pedi_camas: 'matriz-pedi-camas-tipo',
+                pedi_qx: 'matriz-pedi-qx-medico',
+                neo_camas: 'matriz-neo-camas-tipo',
+            };
+            for (const bloque of BLOQUES_MATRIZ_INFORME) {
+                pintarMatrizPorTipos(idsContenedor[bloque.grupoId], bloque);
+            }
 
             // Emergencia + % Ocupación (celdas sueltas, con reintento)
             const [atendidos, hospitalizados, respiratoria, ginecoAt, ginecoHosp, pctAd, pctPed] = await Promise.all([
@@ -2586,11 +2574,10 @@
             'pabellon_gid':                   { valor: '947824045', grupo: 'Pabellón', etiqueta: 'gid de la pestaña "PABELLON/TRASLADOS"' },
 
             // --- Informe de Turno: Camas por Tipo y Bloques (rangos completos) ---
-            'informe_adulto_camas_tipo':      { valor: 'A49:G52', grupo: 'Informe de Turno · Adulto', etiqueta: 'Rango: Camas por Tipo (UCI/UTI/Medias/Básicas)' },
-            'informe_adulto_qx_medico':       { valor: 'I49:R52', grupo: 'Informe de Turno · Adulto', etiqueta: 'Rango: Altas Encuesta (Bloque Qx / Bloque Médico / UCI / UTI)' },
-            'informe_pedi_camas_tipo':        { valor: 'A55:G60', grupo: 'Informe de Turno · Pediatría', etiqueta: 'Rango: Camas por Tipo (UCIP/UTIP/Medias Ped/Básicas Ped)' },
-            'informe_pedi_qx_medico':         { valor: 'K65:S68', grupo: 'Informe de Turno · Pediatría', etiqueta: 'Rango: Altas Encuesta (Bloque Qx / Bloque Médico / UCIP / UTIP)' },
-            'informe_neo_camas_tipo':         { valor: 'A66:G71', grupo: 'Informe de Turno · Neonatología', etiqueta: 'Rango: Camas por Tipo (UCI-NEO/UTI-NEO/Medias-NEO/Básicas-NEO)' },
+            // (Las entradas de "Camas por Tipo y Bloques Especiales" se generan
+            // más abajo automáticamente desde BLOQUES_MATRIZ_INFORME -- una
+            // celda inicial + un nombre editable por cada tipo de cama.)
+
 
             // --- Emergencia Hospitalaria ---
             'emergencia_total_atendidos':        { valor: 'S55', grupo: 'Emergencia Hospitalaria', etiqueta: 'N° Total Pacientes Atendidos (SEH)' },
@@ -2603,6 +2590,69 @@
             'pct_ocupacion_adulto':  { valor: 'K54', grupo: '% Ocupación Total', etiqueta: 'Celda % Ocupación Total Adultos (pestaña adulto)' },
             'pct_ocupacion_pedi':    { valor: 'N70', grupo: '% Ocupación Total', etiqueta: 'Celda % Ocupación Total Pediatría (pestaña PEDIATRIA)' },
         };
+
+        // ---------------------------------------------------------------
+        // "3. Camas por Tipo y Bloques Especiales": en vez de leer un rango
+        // ancho completo (poco confiable -- Google puede omitir columnas
+        // vacías y correr todo), cada TIPO de cama tiene su propia CELDA
+        // INICIAL editable + un NOMBRE editable. Desde esa celda se leen
+        // hacia abajo, una fila por cada métrica del bloque (mismo orden
+        // que la planilla: Habilitadas, Ocupadas+Reservada, Covid, No Covid,
+        // [Dg. Respiratorio, VMI si aplica]).
+        // ---------------------------------------------------------------
+        const METRICAS_CAMAS_4 = ['Nº Camas Habilitadas', 'Nº Camas Ocupadas (+Reservada)', 'Nº Camas Ocupadas COVID', 'Nº Camas Ocupadas NO COVID'];
+        const METRICAS_CAMAS_6 = [...METRICAS_CAMAS_4, 'Nº Camas Dg. Respiratorio', 'Nº Pacientes en VMI'];
+
+        const BLOQUES_MATRIZ_INFORME = [
+            { grupoId: 'adulto_camas', label: 'Adulto · Camas por Tipo', sheet: 'adulto', metricas: METRICAS_CAMAS_4,
+              tipos: [
+                  { id: 'uci', nombre: 'UCI', celda: 'D49' },
+                  { id: 'uti', nombre: 'UTI', celda: 'E49' },
+                  { id: 'medias', nombre: 'MEDIAS', celda: 'F49' },
+                  { id: 'basicas', nombre: 'BÁSICAS', celda: 'G49' },
+              ] },
+            { grupoId: 'adulto_qx', label: 'Adulto · Altas Encuesta Área Adulto', sheet: 'adulto', metricas: METRICAS_CAMAS_4,
+              tipos: [
+                  { id: 'qx', nombre: 'Bloque Qx (Básicas/Medias)', celda: 'I49' },
+                  { id: 'medico', nombre: 'Bloque Médico (Básicas/Medias)', celda: 'L49' },
+                  { id: 'uci', nombre: 'UCI', celda: 'O49' },
+                  { id: 'uti', nombre: 'UTI', celda: 'R49' },
+              ] },
+            { grupoId: 'pedi_camas', label: 'Pediatría · Camas por Tipo', sheet: 'PEDIATRIA', metricas: METRICAS_CAMAS_6,
+              tipos: [
+                  { id: 'ucip', nombre: 'UCIP', celda: 'D55' },
+                  { id: 'utip', nombre: 'UTIP', celda: 'E55' },
+                  { id: 'medias', nombre: 'MEDIAS PED', celda: 'F55' },
+                  { id: 'basicas', nombre: 'BÁSICAS PED', celda: 'G55' },
+              ] },
+            { grupoId: 'pedi_qx', label: 'Pediatría · Altas Encuesta Área Pediátrica', sheet: 'PEDIATRIA', metricas: METRICAS_CAMAS_4,
+              tipos: [
+                  { id: 'qx', nombre: 'Bloque Qx (Básicas/Medias)', celda: 'K65' },
+                  { id: 'medico', nombre: 'Bloque Médico (Básicas/Medias)', celda: 'M65' },
+                  { id: 'ucip', nombre: 'UCIP', celda: 'O65' },
+                  { id: 'utip', nombre: 'UTIP', celda: 'Q65' },
+              ] },
+            { grupoId: 'neo_camas', label: 'Neonatología · Camas por Tipo', sheet: 'PEDIATRIA', metricas: METRICAS_CAMAS_6,
+              tipos: [
+                  { id: 'uci', nombre: 'UCI-NEO', celda: 'D66' },
+                  { id: 'uti', nombre: 'UTI-NEO', celda: 'E66' },
+                  { id: 'medias', nombre: 'MEDIAS-NEO', celda: 'F66' },
+                  { id: 'basicas', nombre: 'BÁSICAS-NEO', celda: 'G66' },
+              ] },
+        ];
+
+        // Genera 2 entradas editables (celda inicial + nombre) por cada tipo
+        // de cada bloque, y las agrega a CONFIG_CELDAS_DEFAULT automáticamente.
+        BLOQUES_MATRIZ_INFORME.forEach(bloque => {
+            bloque.tipos.forEach(tipo => {
+                CONFIG_CELDAS_DEFAULT[`informe_${bloque.grupoId}_${tipo.id}_celda`] = {
+                    valor: tipo.celda, grupo: bloque.label, etiqueta: `${tipo.nombre} · Celda inicial (fila "Habilitadas")`
+                };
+                CONFIG_CELDAS_DEFAULT[`informe_${bloque.grupoId}_${tipo.id}_nombre`] = {
+                    valor: tipo.nombre, grupo: bloque.label, etiqueta: `${tipo.nombre} · Nombre a mostrar`
+                };
+            });
+        });
 
         let configCeldasCache = {}; // solo overrides (lo que el admin cambió); si una clave no está, se usa el valor por defecto
 

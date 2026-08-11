@@ -505,7 +505,21 @@ class Component extends DCLogic {
       { tipo: 'HUAP', apertura: '27-07-2026', nombre: 'Reservado', sexo: 'OTRO', rut: '—', edad: '82', comuna: 'Santiago', diagnostico: 'Falla multiorgánica', especialidad: 'UCI', centroOrigen: 'HSBA', servicioDestino: '—', estado: 'Fallece', equipoGestor: 'Equipo B', actualizacion: '07-08-2026 12:00', observaciones: '' },
     ],
   };
-  hecColors = { 'En revisión por referente': '#0ea5e9', 'En espera de cupo': '#f59e0b', 'En traslado': '#e11d48', 'Exitoso': '#059669', 'Rechazado': '#64748b', 'Desestimado': '#7c3aed', 'Fallece': '#111827' };
+  hecColors = {
+    'en revision por referente': '#0ea5e9', 'en espera de cupo': '#f59e0b', 'en traslado': '#e11d48',
+    'exitoso': '#059669', 'rechazado': '#64748b', 'desestimado': '#7c3aed', 'fallece': '#111827',
+    'completando estudios': '#f97316', 'cupo reservado': '#0284c7', 'pendiente': '#eab308',
+  };
+  // Paleta de respaldo (rota automáticamente) para estados que no estén en hecColors
+  hecColorsRespaldo = ['#6366f1', '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308', '#0891b2', '#db2777'];
+
+  colorParaEstado(estado, indice) {
+    const clave = String(estado || '').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // sin tildes
+    if (this.hecColors[clave]) return this.hecColors[clave];
+    if (this.cdtColors[clave]) return this.cdtColors[clave];
+    return this.hecColorsRespaldo[indice % this.hecColorsRespaldo.length];
+  }
 
   patientsByEstadoMacro = {
     'En revisión por referente': [
@@ -543,14 +557,17 @@ class Component extends DCLogic {
     { fecha: '02-08-2026', nombrePaciente: 'Javiera Molina Bravo', ficha: '43500', rut: '18.777.888-9', diagnostico: 'Apendicitis', tipoSolicitud: 'Cirugía', carpeta: 'Luis Barraza', hospitalizado: 'Sí', especialidad: 'Cirugía' },
     { fecha: '02-08-2026', nombrePaciente: 'Benjamín Soto Araya', ficha: '43210', rut: '19.888.999-0', diagnostico: 'Neumonía pediátrica', tipoSolicitud: 'Medicina', carpeta: 'Gestores', hospitalizado: 'Sí', especialidad: 'Pediatría' },
   ];
-  cdtColors = { 'Cirugía': '#d97706', 'Medicina Interna': '#0284c7', 'Pediatría': '#059669', 'Ginecología': '#e11d48', 'Medicina': '#0284c7', 'Luis Barraza': '#7c3aed', 'Gestores': '#f59e0b' };
+  cdtColors = {
+    'cirugia': '#d97706', 'medicina interna': '#0284c7', 'pediatria': '#059669', 'ginecologia': '#e11d48',
+    'medicina': '#0284c7', 'luis barraza': '#7c3aed', 'gestores': '#f59e0b', 'qmt': '#7c3aed', 'gestion': '#f59e0b',
+  };
 
   buildCdtSection(label, categoryField, categoriesArr, selected, onPick) {
     const total = categoriesArr.reduce((sum, c) => sum + c.count, 0);
     let acc = 0;
-    const pieLegend = categoriesArr.map((c) => {
+    const pieLegend = categoriesArr.map((c, i) => {
       const pct = total ? (c.count / total * 100) : 0;
-      const color = this.cdtColors[c.estado] || '#94a3b8';
+      const color = this.colorParaEstado(c.estado, i);
       const seg = { label: c.estado, value: c.count, color, from: acc, to: acc + pct };
       acc += pct;
       return seg;
@@ -572,9 +589,9 @@ class Component extends DCLogic {
   buildHecSection(label, tipoKey, estadosArr, selected, onPick, patientsMap) {
     const total = estadosArr.reduce((sum, e) => sum + e.count, 0);
     let acc = 0;
-    const pieLegend = estadosArr.map((e) => {
+    const pieLegend = estadosArr.map((e, i) => {
       const pct = total ? (e.count / total * 100) : 0;
-      const color = this.hecColors[e.estado] || '#94a3b8';
+      const color = this.colorParaEstado(e.estado, i);
       const seg = { label: e.estado, value: e.count, color, from: acc, to: acc + pct };
       acc += pct;
       return seg;
@@ -799,7 +816,7 @@ class Component extends DCLogic {
       data.rows.forEach((f) => {
         if (!f.some((v) => String(v ?? '').trim() !== '')) return;
         const estado = String(val(f, idx.estado)).trim();
-        if (!estado) return;
+        if (!estado || estado.toLowerCase() === 'estado') return; // descarta el encabezado colado como dato
         conteo[estado] = (conteo[estado] || 0) + 1;
         (pacientes[estado] = pacientes[estado] || []).push({
           tipo, apertura: val(f, idx.apertura), nombre: val(f, idx.nombre), sexo: val(f, idx.sexo),
@@ -827,7 +844,11 @@ class Component extends DCLogic {
       });
       this.patientsByEstado = combinado;
 
-      const contar = (arr, nombre) => (arr.find((e) => e.estado === nombre) || {}).count || 0;
+      // Comparación insensible a mayúsculas y tildes (tu planilla real usa
+      // MAYÚSCULAS, ej. "EN ESPERA DE CUPO", mientras el código buscaba
+      // "En espera de cupo" tal cual -> por eso los KPI daban 0).
+      const normalizar = (s) => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const contar = (arr, nombre) => (arr.find((e) => normalizar(e.estado) === normalizar(nombre)) || {}).count || 0;
       hecMod.kpis[0].value = String(contar(hecProc.estadosArr, 'En espera de cupo'));
       hecMod.kpis[1].value = String(contar(hecProc.estadosArr, 'En traslado'));
       hecMod.kpis[2].value = String(contar(huapProc.estadosArr, 'En espera de cupo'));
@@ -956,4 +977,3 @@ class Component extends DCLogic {
 </script>
 </body>
 </html>
-

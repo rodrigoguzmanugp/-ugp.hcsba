@@ -56,10 +56,15 @@
 <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
   <div>
     <main style="max-width:1280px;margin:0 auto;padding:12px 16px 32px">
-      <div style="margin-bottom:22px">
-        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#94a3b8;margin:0 0 4px">Resumen operativo · Adulto y Pediatría</p>
-        <h2 style="margin:0 0 6px;font-size:24px;font-weight:800;color:#0f172a">Ocupación hospitalaria en tiempo real</h2>
-        <p style="margin:0;color:#64748b;font-size:14px;max-width:640px">Monitoreo centralizado de camas críticas, turnos, derivaciones y solicitudes. Selecciona un módulo abajo para ver su resumen.</p>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px">
+        <div>
+          <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#94a3b8;margin:0 0 4px">Resumen operativo · Adulto y Pediatría</p>
+          <h2 style="margin:0 0 6px;font-size:24px;font-weight:800;color:#0f172a">Ocupación hospitalaria en tiempo real</h2>
+          <p style="margin:0;color:#64748b;font-size:14px;max-width:640px">Monitoreo centralizado de camas críticas, turnos, derivaciones y solicitudes. Selecciona un módulo abajo para ver su resumen.</p>
+        </div>
+        <button type="button" onclick="{{ abrirConfigEnlaces }}" style="flex:none;display:flex;align-items:center;gap:6px;background:#0f172a;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600">
+          <i class="fa-solid fa-gear"></i> Configurar Enlaces
+        </button>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px">
@@ -140,7 +145,7 @@
 
             <sc-if value="{{ detail.isHec }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:28px">
-                <sc-for list="{{ detail.sections }}" as="sec" hint-placeholder-count="2">
+                <sc-for list="{{ detail.sections }}" as="sec" hint-placeholder-count="3">
                   <div style="min-width:0">
                     <p style="margin:0 0 10px;font-weight:800;color:#0f172a;font-size:15px">{{ sec.label }}</p>
                     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
@@ -352,6 +357,97 @@
           </div>
         </div>
       </sc-if>
+
+      <sc-if value="{{ mostrarConfigEnlaces }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px">
+          <div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+            <div style="background:#0f172a;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2">
+              <p style="margin:0;font-weight:800;font-size:15px"><i class="fa-solid fa-gear" style="margin-right:8px"></i>Configurar Enlaces</p>
+              <button type="button" onclick="{{ cerrarConfigEnlaces }}" style="background:transparent;border:0;color:#94a3b8;font-size:18px;cursor:pointer">✕</button>
+            </div>
+
+            <form onsubmit="{{ guardarConfigDesdeFormulario }}" style="padding:20px;display:flex;flex-direction:column;gap:18px;font-size:13px">
+
+              <div>
+                <p style="margin:0 0 8px;font-weight:800;color:#0f172a">Informe de Turno</p>
+                <label style="font-size:11px;color:#64748b">ID de la planilla</label>
+                <input id="cfg-informe-id" type="text" value="{{ configActual.informeId }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+              </div>
+
+              <div>
+                <p style="margin:0 0 8px;font-weight:800;color:#0f172a">Solicitudes CDT</p>
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+                  <div>
+                    <label style="font-size:11px;color:#64748b">ID de la planilla</label>
+                    <input id="cfg-cdt-id" type="text" value="{{ configActual.cdtId }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+                  </div>
+                  <div>
+                    <label style="font-size:11px;color:#64748b">Pestaña</label>
+                    <input id="cfg-cdt-sheet" type="text" value="{{ configActual.cdtSheet }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p style="margin:0 0 8px;font-weight:800;color:#0f172a">HEC y HUAP</p>
+                <label style="font-size:11px;color:#64748b">ID de la planilla</label>
+                <input id="cfg-hechuap-id" type="text" value="{{ configActual.hecHuapId }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px;margin-bottom:8px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div>
+                    <label style="font-size:11px;color:#64748b">gid pestaña HEC</label>
+                    <input id="cfg-hec-gid" type="text" value="{{ configActual.hecGid }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+                  </div>
+                  <div>
+                    <label style="font-size:11px;color:#64748b">gid pestaña HUAP</label>
+                    <input id="cfg-huap-gid" type="text" value="{{ configActual.huapGid }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p style="margin:0 0 8px;font-weight:800;color:#0f172a">Macrorred / Otros Públicos (3 pestañas)</p>
+                <p style="margin:0 0 8px;font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 8px">
+                  <i class="fa-solid fa-lock" style="margin-right:4px"></i>Hoja restringida: solo se lee si el Gmail conectado en el sistema principal ("Conectar Google") tiene permiso.
+                </p>
+                <label style="font-size:11px;color:#64748b">ID de la planilla</label>
+                <input id="cfg-macro-id" type="text" value="{{ configActual.macroId }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px;margin-bottom:8px">
+                <label style="font-size:11px;color:#64748b">Pestaña 1 (Otros Públicos y Macrorred)</label>
+                <input id="cfg-macro-sheet1" type="text" value="{{ configActual.macroSheet1 }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px;margin-bottom:8px">
+                <label style="font-size:11px;color:#64748b">Pestaña 2 (Ley de Urgencias y MLE)</label>
+                <input id="cfg-macro-sheet2" type="text" value="{{ configActual.macroSheet2 }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px;margin-bottom:8px">
+                <label style="font-size:11px;color:#64748b">Pestaña 3 (HCSBA a UGCC/Salud Mental)</label>
+                <input id="cfg-macro-sheet3" type="text" value="{{ configActual.macroSheet3 }}" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-top:2px">
+              </div>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" onclick="{{ verificarTodosLosEncabezados }}" style="flex:1;min-width:200px;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font-weight:700;font-size:13px">
+                  <sc-if value="{{ verificandoEncabezados }}" hint-placeholder-val="{{ false }}">Verificando...</sc-if>
+                  <sc-if value="{{ !verificandoEncabezados }}" hint-placeholder-val="{{ true }}"><i class="fa-solid fa-magnifying-glass" style="margin-right:6px"></i>Verificar Encabezados</sc-if>
+                </button>
+                <button type="submit" style="flex:1;min-width:160px;background:#059669;color:#fff;border:0;border-radius:10px;padding:10px;font-weight:800;font-size:13px">
+                  <i class="fa-solid fa-floppy-disk" style="margin-right:6px"></i>Guardar y Recargar
+                </button>
+              </div>
+
+              <sc-if value="{{ reporteVerificacion }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #e2e8f0;padding-top:14px">
+                  <sc-for list="{{ reporteVerificacion }}" as="rep" hint-placeholder-count="6">
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">
+                      <p style="margin:0 0 4px;font-weight:800;color:#0f172a;font-size:12px">{{ rep.fuente }}</p>
+                      <p style="margin:0 0 6px;font-size:11px;color:#64748b;word-break:break-word">Encabezados detectados: {{ rep.headersTexto }}</p>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <sc-for list="{{ rep.items }}" as="it" hint-placeholder-count="5">
+                          <span style="{{ it.badgeStyle }}">{{ it.icono }} {{ it.nombre }}</span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </form>
+          </div>
+        </div>
+      </sc-if>
     </main>
   </div>
 </sc-if>
@@ -359,7 +455,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { view: 'dash', sel: null };
+  state = { view: 'dash', sel: null, mostrarConfigEnlaces: false, verificandoEncabezados: false, reporteVerificacion: null };
 
   // --- Conexión a Google Sheets reales (mismos archivos que usa el sistema principal) ---
   INFORME_TURNO_ID = '1a0Jp_St5sYofhbh7atUzy1PGspOIA_IlpZjbIrrUYZ0'; // "INFORME DE TURNO"
@@ -367,6 +463,122 @@ class Component extends DCLogic {
   CDT_SHEET = 'ORDENES';
   HECHUAP_ID = '16I_nsbYTEyaJR6MlRFN9oyGgxIxjJM_V9SL25DXaqbE';       // "REGISTRO CASOS HEC Y HUAP"
   HECHUAP_GIDS = { hec: '1635650262', huap: '122616479' };
+  MACRO_ID = '1YDkBPPro4IYlODHYVajJSo_S974KWpdEibEzF1I7McI';         // "OTROS PÚBLICOS Y MACRORED / LEY URGENCIAS / SALUD MENTAL"
+  MACRO_SHEET_1 = 'OTROS PÚBLICOS Y MACRORED 08/26';
+  MACRO_SHEET_2 = 'LEY DE URGENCIAS Y MLE 07/26';
+  MACRO_SHEET_3 = 'HCSBA A UGCC/SALUD MENTAL 08/26';
+
+  // Todas las fuentes editables desde "Configurar Enlaces" (ícono ⚙ arriba)
+  cargarConfigEnlaces() {
+    let cfg = {};
+    try { cfg = JSON.parse(localStorage.getItem('gc_dash_config') || '{}'); } catch (e) { cfg = {}; }
+    this.INFORME_TURNO_ID = cfg.informeId || this.INFORME_TURNO_ID;
+    this.CDT_ID = cfg.cdtId || this.CDT_ID;
+    this.CDT_SHEET = cfg.cdtSheet || this.CDT_SHEET;
+    this.HECHUAP_ID = cfg.hecHuapId || this.HECHUAP_ID;
+    this.HECHUAP_GIDS = { hec: cfg.hecGid || this.HECHUAP_GIDS.hec, huap: cfg.huapGid || this.HECHUAP_GIDS.huap };
+    this.MACRO_ID = cfg.macroId || this.MACRO_ID;
+    this.MACRO_SHEET_1 = cfg.macroSheet1 || this.MACRO_SHEET_1;
+    this.MACRO_SHEET_2 = cfg.macroSheet2 || this.MACRO_SHEET_2;
+    this.MACRO_SHEET_3 = cfg.macroSheet3 || this.MACRO_SHEET_3;
+  }
+
+  guardarConfigEnlaces(cfg) {
+    localStorage.setItem('gc_dash_config', JSON.stringify(cfg));
+    this.cargarConfigEnlaces();
+  }
+
+  abrirConfigEnlaces = () => this.setState({ mostrarConfigEnlaces: true, reporteVerificacion: null });
+  cerrarConfigEnlaces = () => this.setState({ mostrarConfigEnlaces: false });
+
+  guardarConfigDesdeFormulario = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const val = (id) => document.getElementById(id)?.value?.trim() || '';
+    const cfg = {
+      informeId: val('cfg-informe-id'),
+      cdtId: val('cfg-cdt-id'), cdtSheet: val('cfg-cdt-sheet'),
+      hecHuapId: val('cfg-hechuap-id'), hecGid: val('cfg-hec-gid'), huapGid: val('cfg-huap-gid'),
+      macroId: val('cfg-macro-id'), macroSheet1: val('cfg-macro-sheet1'), macroSheet2: val('cfg-macro-sheet2'), macroSheet3: val('cfg-macro-sheet3'),
+    };
+    this.guardarConfigEnlaces(cfg);
+    this.setState({ mostrarConfigEnlaces: false });
+    this.cargarDatosReales(); // recarga todo con los nuevos enlaces
+  };
+
+  // Columnas esperadas por fuente -- para detectar encabezados con nombre distinto
+  ENCABEZADOS_ESPERADOS = {
+    'SOLICITUDES CDT': [
+      { nombre: 'Fecha', patron: /fecha/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Diagnóstico', patron: /diagn/ }, { nombre: 'Tipo Solicitud', patron: /tipo.*solicitud/ },
+      { nombre: 'Carpeta', patron: /carpeta/ }, { nombre: 'Hospitalizado', patron: /hospitaliz/ },
+    ],
+    'HEC (REGISTRO CASOS)': [
+      { nombre: 'Estado', patron: /estado/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Diagnóstico', patron: /diagn/ }, { nombre: 'Especialidad', patron: /especialidad/ },
+    ],
+    'HUAP (REGISTRO CASOS)': [
+      { nombre: 'Estado', patron: /estado/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Diagnóstico', patron: /diagn/ }, { nombre: 'Especialidad', patron: /especialidad/ },
+    ],
+    'Macrorred · Otros Públicos': [
+      { nombre: 'Estado', patron: /estado/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Especialidad', patron: /especialidad/ }, { nombre: 'Centro de Origen', patron: /centro.*origen/ },
+    ],
+    'Macrorred · Ley Urgencias/MLE': [
+      { nombre: 'Estado', patron: /estado/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Especialidad', patron: /especialidad/ },
+    ],
+    'Macrorred · Salud Mental': [
+      { nombre: 'Estado', patron: /estado/ }, { nombre: 'Nombre', patron: /nombre/ }, { nombre: 'RUT', patron: /rut/ },
+      { nombre: 'Tipo de Derivación', patron: /tipo.*derivacion/ },
+    ],
+  };
+
+  verificarTodosLosEncabezados = async () => {
+    this.setState({ verificandoEncabezados: true, reporteVerificacion: null });
+    const val = (id) => document.getElementById(id)?.value?.trim() || '';
+
+    const fuentes = [
+      { clave: 'SOLICITUDES CDT', leer: () => this.gviz_hoja(val('cfg-cdt-id'), val('cfg-cdt-sheet'), null) },
+      { clave: 'HEC (REGISTRO CASOS)', leer: () => this.gviz_hoja(val('cfg-hechuap-id'), null, val('cfg-hec-gid')) },
+      { clave: 'HUAP (REGISTRO CASOS)', leer: () => this.gviz_hoja(val('cfg-hechuap-id'), null, val('cfg-huap-gid')) },
+      { clave: 'Macrorred · Otros Públicos', leer: () => this.leerHojaConToken(val('cfg-macro-id'), val('cfg-macro-sheet1'), null) },
+      { clave: 'Macrorred · Ley Urgencias/MLE', leer: () => this.leerHojaConToken(val('cfg-macro-id'), val('cfg-macro-sheet2'), null) },
+      { clave: 'Macrorred · Salud Mental', leer: () => this.leerHojaConToken(val('cfg-macro-id'), val('cfg-macro-sheet3'), null) },
+    ];
+
+    const reporte = [];
+    for (const f of fuentes) {
+      let headers = [];
+      let error = false;
+      try {
+        const data = await f.leer();
+        headers = data.headers || [];
+        if (headers.length === 0) error = true;
+      } catch (e) { error = true; }
+
+      const esperados = this.ENCABEZADOS_ESPERADOS[f.clave] || [];
+      const items = esperados.map((exp) => {
+        const ok = headers.some((h) => exp.patron.test(String(h || '').toLowerCase()));
+        return {
+          nombre: exp.nombre,
+          ok,
+          icono: ok ? '✅' : '❌',
+          badgeStyle: 'font-size:11px;padding:3px 8px;border-radius:999px;font-weight:600;' +
+            (ok ? 'background:#dcfce7;color:#166534' : 'background:#fee2e2;color:#991b1b'),
+        };
+      });
+      reporte.push({
+        fuente: f.clave,
+        error,
+        headersTexto: headers.length ? headers.join(' · ') : '(no se pudo leer -- revisa el ID/pestaña, o si la hoja es privada, conecta Google en el sistema principal)',
+        items,
+      });
+    }
+
+    this.setState({ verificandoEncabezados: false, reporteVerificacion: reporte });
+  };
+
 
   modulesData = [
     { id: 'camas', icon: 'fa-solid fa-bed', bg: '#ecfdf5', text: '#059669', name: 'Novedades 2026 (Camas)', subtitle: 'Ocupación y disponibilidad de camas críticas — Adulto y Pediatría',
@@ -464,6 +676,15 @@ class Component extends DCLogic {
         { estado: 'Exitoso', count: 1 },
         { estado: 'Rechazado', count: 0 },
         { estado: 'Desestimado', count: 1 },
+        { estado: 'Fallece', count: 0 },
+      ],
+      saludMentalEstados: [
+        { estado: 'En revisión por referente', count: 2 },
+        { estado: 'En espera de cupo', count: 3 },
+        { estado: 'En traslado', count: 1 },
+        { estado: 'Exitoso', count: 2 },
+        { estado: 'Rechazado', count: 0 },
+        { estado: 'Desestimado', count: 0 },
         { estado: 'Fallece', count: 0 },
       ] },
   ];
@@ -583,10 +804,10 @@ class Component extends DCLogic {
   }
 
   submitLogin = (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ view: 'dash' }); };
-  logout = () => this.setState({ view: 'login', sel: null, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null });
-  toggleSelect = (id) => this.setState((s) => ({ sel: s.sel === id ? null : id, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null }));
+  logout = () => this.setState({ view: 'login', sel: null, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, saludMentalEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null });
+  toggleSelect = (id) => this.setState((s) => ({ sel: s.sel === id ? null : id, hecEstado: null, huapEstado: null, macroEstado: null, privadoEstado: null, saludMentalEstado: null, cdtPendEstado: null, cdtTipoEstado: null, cdtCarpetaEstado: null }));
 
-  buildHecSection(label, tipoKey, estadosArr, selected, onPick, patientsMap) {
+  buildHecSection(label, tipoKey, estadosArr, selected, onPick, patientsMap, filtrarPorTipo) {
     const total = estadosArr.reduce((sum, e) => sum + e.count, 0);
     let acc = 0;
     const pieLegend = estadosArr.map((e, i) => {
@@ -602,7 +823,8 @@ class Component extends DCLogic {
       rowStyle: 'cursor:pointer' + (selected === e.estado ? ';background:#fef2f2' : ''),
       onSelect: () => onPick(e.estado),
     }));
-    const patients = selected ? ((patientsMap || this.patientsByEstado)[selected] || []).filter((p) => p.tipo === tipoKey) : [];
+    let patients = selected ? ((patientsMap || this.patientsByEstado)[selected] || []) : [];
+    if (filtrarPorTipo) patients = patients.filter((p) => p.tipo === tipoKey);
     return { label, rows, pieGradient, pieLegend, selectedEstado: selected, patients, closePatients: () => onPick(null) };
   }
 
@@ -637,6 +859,52 @@ class Component extends DCLogic {
       return { headers, rows };
     } catch (e) { console.warn('gviz_hoja error', e); return { headers: [], rows: [] }; }
   }
+
+  // Token de Google guardado por el sistema principal ("Conectar Google")
+  // en sessionStorage. Como este dashboard vive en el MISMO sitio (mismo
+  // origen), puede reutilizar ese mismo permiso para leer hojas privadas
+  // (ej. "Macrorred/Privados", compartida solo con Gmail autorizados).
+  tokenGoogleVigente() {
+    const tok = sessionStorage.getItem('gc_google_token');
+    const exp = Number(sessionStorage.getItem('gc_google_token_exp') || 0);
+    return (tok && Date.now() < exp) ? tok : null;
+  }
+
+  // Igual que gviz_hoja, pero intenta primero la API oficial de Google
+  // Sheets (usando el token reutilizado) -- necesario para hojas privadas.
+  // Si no hay token o falla, cae al método público (gviz).
+  async leerHojaConToken(spreadsheetId, sheetName, gid) {
+    const token = this.tokenGoogleVigente();
+    if (token) {
+      try {
+        let nombreHoja = sheetName;
+        if (!nombreHoja && gid) {
+          const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (metaRes.ok) {
+            const meta = await metaRes.json();
+            const hoja = (meta.sheets || []).find((s) => String(s.properties.sheetId) === String(gid));
+            nombreHoja = hoja?.properties?.title;
+          }
+        }
+        if (nombreHoja) {
+          const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(nombreHoja)}`;
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          if (res.ok) {
+            const data = await res.json();
+            const filas = data.values || [];
+            if (filas.length) {
+              return { headers: filas[0], rows: filas.slice(1) };
+            }
+          }
+        }
+      } catch (e) { console.warn('leerHojaConToken (API oficial) falló, se intenta método público:', e); }
+    }
+    // Sin token o falló -> respaldo público (funciona si la hoja es pública)
+    return this.gviz_hoja(spreadsheetId, sheetName, gid);
+  }
+
 
   col(headers, patron) {
     return headers.findIndex((h) => patron.test(String(h || '').toLowerCase()));
@@ -724,13 +992,76 @@ class Component extends DCLogic {
   }
 
   async cargarDatosReales() {
+    this.cargarConfigEnlaces();
     await Promise.all([
       this.cargarCamasCriticasReal(),
       this.cargarHecHuapReal(),
       this.cargarCdtReal(),
       this.cargarMatricesInformeReal(),
+      this.cargarMacrorredReal(),
     ]);
     this.setState({}); // fuerza el re-render con los datos ya actualizados
+  }
+
+  // --- Macrorred / Otros Públicos y Convenios ---
+  // Fuente: "OTROS PÚBLICOS Y MACRORED / LEY URGENCIAS / SALUD MENTAL"
+  // (compartida en modo restringido: requiere "Conectar Google" en el
+  // sistema principal para poder leerse, ya que no es pública).
+  async cargarMacrorredReal() {
+    const modulo = this.modulesData.find((m) => m.id === 'macro');
+    if (!modulo) return;
+
+    const procesarHoja = async (sheetName, tipoLabel) => {
+      const data = await this.leerHojaConToken(this.MACRO_ID, sheetName, null);
+      if (!data.rows.length) return { estadosArr: [], pacientes: {} };
+      const idx = {
+        estado: this.col(data.headers, /estado/),
+        apertura: this.col(data.headers, /apertura/),
+        nombre: this.col(data.headers, /nombre/),
+        sexo: this.col(data.headers, /sexo/),
+        rut: this.col(data.headers, /rut/),
+        edad: this.col(data.headers, /edad/),
+        comuna: this.col(data.headers, /comuna/),
+        diagnostico: this.col(data.headers, /diagn/),
+        especialidad: this.col(data.headers, /especialidad/),
+        origen: this.col(data.headers, /centro.*origen/),
+        servicioOrigen: this.col(data.headers, /servicio.*origen/),
+        destino: this.col(data.headers, /servicio.*destino|centro.*destino/),
+        equipo: this.col(data.headers, /equipo/),
+        actualiza: this.col(data.headers, /actualiza/),
+        obs: this.col(data.headers, /observac/),
+      };
+      const conteo = {};
+      const pacientes = {};
+      const val = (f, i) => (i >= 0 ? (f[i] ?? '') : '');
+      data.rows.forEach((f) => {
+        if (!f.some((v) => String(v ?? '').trim() !== '')) return;
+        const estado = String(val(f, idx.estado)).trim();
+        if (!estado || estado.toLowerCase() === 'estado') return;
+        conteo[estado] = (conteo[estado] || 0) + 1;
+        (pacientes[estado] = pacientes[estado] || []).push({
+          tipo: tipoLabel, apertura: val(f, idx.apertura), nombre: val(f, idx.nombre), sexo: val(f, idx.sexo),
+          rut: val(f, idx.rut), edad: val(f, idx.edad), comuna: val(f, idx.comuna),
+          diagnostico: val(f, idx.diagnostico), especialidad: val(f, idx.especialidad),
+          centroOrigen: val(f, idx.origen), servicioDestino: val(f, idx.destino), estado,
+          equipoGestor: val(f, idx.equipo), actualizacion: val(f, idx.actualiza), observaciones: val(f, idx.obs),
+        });
+      });
+      return { estadosArr: Object.keys(conteo).map((e) => ({ estado: e, count: conteo[e] })), pacientes };
+    };
+
+    const [proc1, proc2, proc3] = await Promise.all([
+      procesarHoja(this.MACRO_SHEET_1, 'MACRO'),
+      procesarHoja(this.MACRO_SHEET_2, 'PRIVADO'),
+      procesarHoja(this.MACRO_SHEET_3, 'SALUD_MENTAL'),
+    ]);
+
+    if (proc1.estadosArr.length) modulo.macroEstados = proc1.estadosArr;
+    if (proc2.estadosArr.length) modulo.privadosEstados = proc2.estadosArr;
+    if (proc3.estadosArr.length) modulo.saludMentalEstados = proc3.estadosArr;
+    this.patientsByEstadoMacroReal1 = proc1.pacientes;
+    this.patientsByEstadoMacroReal2 = proc2.pacientes;
+    this.patientsByEstadoMacroReal3 = proc3.pacientes;
   }
 
   // --- 1) Camas críticas (UCI/UTI Adulto, UCIP/UTIP Pediatría) desde "INFORME DE TURNO" ---
@@ -836,6 +1167,12 @@ class Component extends DCLogic {
     if (huapProc.estadosArr.length) hecMod.huapEstados = huapProc.estadosArr;
 
     if (hecProc.estadosArr.length || huapProc.estadosArr.length) {
+      // Antes se combinaban HEC+HUAP en un solo diccionario y se filtraban
+      // por "tipo" al mostrarlos -- eso era un punto frágil. Ahora se
+      // guardan por separado, sin depender de ningún filtro posterior.
+      this.patientsByEstadoHec = hecProc.pacientes;
+      this.patientsByEstadoHuap = huapProc.pacientes;
+      // Se mantiene también el combinado por compatibilidad con otras partes del código.
       const combinado = {};
       [hecProc.pacientes, huapProc.pacientes].forEach((mapa) => {
         Object.keys(mapa).forEach((estado) => {
@@ -888,7 +1225,7 @@ class Component extends DCLogic {
 
     // Especialidad / Tipo de Solicitud (ej: MEDICINA, CIRUGIA) -- se detecta
     // la columna por su encabezado (más robusto que fijar una letra).
-    const idxEspecialidad = this.col(data.headers, /especialidad|equipo|servicio/);
+    const idxEspecialidad = this.col(data.headers, /tipo.*solicitud|especialidad/);
     if (idxEspecialidad >= 0) {
       const conteo = {};
       filasConDatos.forEach((f) => {
@@ -928,8 +1265,8 @@ class Component extends DCLogic {
       const pickHec = (v) => this.setState((st) => ({ hecEstado: st.hecEstado === v ? null : v }));
       const pickHuap = (v) => this.setState((st) => ({ huapEstado: st.huapEstado === v ? null : v }));
       const sections = [
-        this.buildHecSection('HEC — Resumen', 'HEC', detail.hecEstados, s.hecEstado, pickHec, this.patientsByEstado),
-        this.buildHecSection('HUAP — Resumen', 'HUAP', detail.huapEstados, s.huapEstado, pickHuap, this.patientsByEstado),
+        this.buildHecSection('HEC — Resumen', 'HEC', detail.hecEstados, s.hecEstado, pickHec, this.patientsByEstadoHec),
+        this.buildHecSection('HUAP — Resumen', 'HUAP', detail.huapEstados, s.huapEstado, pickHuap, this.patientsByEstadoHuap),
       ];
       detail = { ...detail, isHec: true, sections };
     }
@@ -937,9 +1274,11 @@ class Component extends DCLogic {
     if (detail && detail.id === 'macro') {
       const pickMacro = (v) => this.setState((st) => ({ macroEstado: st.macroEstado === v ? null : v }));
       const pickPrivado = (v) => this.setState((st) => ({ privadoEstado: st.privadoEstado === v ? null : v }));
+      const pickSaludMental = (v) => this.setState((st) => ({ saludMentalEstado: st.saludMentalEstado === v ? null : v }));
       const sections = [
-        this.buildHecSection('Macrorred pública — Resumen', 'MACRO', detail.macroEstados, s.macroEstado, pickMacro, this.patientsByEstadoMacro),
-        this.buildHecSection('Privados / Convenio — Resumen', 'PRIVADO', detail.privadosEstados, s.privadoEstado, pickPrivado, this.patientsByEstadoMacro),
+        this.buildHecSection('Macrorred pública — Resumen', 'MACRO', detail.macroEstados, s.macroEstado, pickMacro, this.patientsByEstadoMacroReal1 || this.patientsByEstadoMacro, true),
+        this.buildHecSection('Ley de Urgencias y MLE — Resumen', 'PRIVADO', detail.privadosEstados, s.privadoEstado, pickPrivado, this.patientsByEstadoMacroReal2 || this.patientsByEstadoMacro, true),
+        this.buildHecSection('Salud Mental — Resumen', 'SALUD_MENTAL', detail.saludMentalEstados, s.saludMentalEstado, pickSaludMental, this.patientsByEstadoMacroReal3 || {}, true),
       ];
       detail = { ...detail, isHec: true, sections };
     }
@@ -971,6 +1310,18 @@ class Component extends DCLogic {
       isLogin: s.view === 'login', isDash: s.view === 'dash',
       submitLogin: this.submitLogin, enterGuest: () => this.setState({ view: 'dash' }), logout: this.logout,
       globalKpis: this.globalKpis, modules, hasDetail: !!detail, detail, closeDetail: () => this.setState({ sel: null }),
+      abrirConfigEnlaces: this.abrirConfigEnlaces, cerrarConfigEnlaces: this.cerrarConfigEnlaces,
+      mostrarConfigEnlaces: s.mostrarConfigEnlaces,
+      guardarConfigDesdeFormulario: this.guardarConfigDesdeFormulario,
+      verificarTodosLosEncabezados: this.verificarTodosLosEncabezados,
+      verificandoEncabezados: s.verificandoEncabezados,
+      reporteVerificacion: s.reporteVerificacion,
+      configActual: {
+        informeId: this.INFORME_TURNO_ID,
+        cdtId: this.CDT_ID, cdtSheet: this.CDT_SHEET,
+        hecHuapId: this.HECHUAP_ID, hecGid: this.HECHUAP_GIDS.hec, huapGid: this.HECHUAP_GIDS.huap,
+        macroId: this.MACRO_ID, macroSheet1: this.MACRO_SHEET_1, macroSheet2: this.MACRO_SHEET_2, macroSheet3: this.MACRO_SHEET_3,
+      },
     };
   }
 }
